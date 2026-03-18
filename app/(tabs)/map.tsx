@@ -3,11 +3,11 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
 
-export default function HomeScreen() {
+export default function MapScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">홈</ThemedText>
-      {/* TODO: Phase 2-3에서 타임라인 UI 구현 */}
+      <ThemedText type="title">지도</ThemedText>
+      {/* TODO: Phase 2-7에서 지도 UI 구현 */}
     </ThemedView>
   );
 }

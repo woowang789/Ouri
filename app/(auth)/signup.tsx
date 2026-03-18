@@ -3,11 +3,11 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
 
-export default function HomeScreen() {
+export default function SignupScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">홈</ThemedText>
-      {/* TODO: Phase 2-3에서 타임라인 UI 구현 */}
+      <ThemedText type="title">회원가입</ThemedText>
+      {/* TODO: Phase 2-1에서 UI 구현 */}
     </ThemedView>
   );
 }

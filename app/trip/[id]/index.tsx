@@ -1,13 +1,17 @@
+import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
 
-export default function HomeScreen() {
+export default function TripDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">홈</ThemedText>
-      {/* TODO: Phase 2-3에서 타임라인 UI 구현 */}
+      <ThemedText type="title">여행 상세</ThemedText>
+      <ThemedText>Trip ID: {id}</ThemedText>
+      {/* TODO: Phase 2-5에서 UI 구현 */}
     </ThemedView>
   );
 }
