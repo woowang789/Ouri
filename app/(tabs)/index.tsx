@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
 import { FAB } from '@/components/ui/FAB';
@@ -15,9 +16,11 @@ import type { Trip } from '@/types/trip';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { trips, loading, refresh } = useTrips();
+  const insets = useSafeAreaInsets();
+  const { trips, loading, refreshing, refresh } = useTrips();
   const [coverUrls, setCoverUrls] = useState<Record<string, string>>({});
   const placeholderColor = useThemeColor({}, 'placeholder');
+  const primaryColor = useThemeColor({}, 'primary');
 
   // 커버 사진 URL 로드
   useEffect(() => {
@@ -52,6 +55,9 @@ export default function HomeScreen() {
   if (!loading && trips.length === 0) {
     return (
       <ThemedView style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.base }]}>
+          <ThemedText style={styles.appTitle}>Ouri</ThemedText>
+        </View>
         <EmptyState
           icon="airplane-outline"
           title="아직 여행이 없어요"
@@ -69,14 +75,22 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         renderSectionHeader={({ section }) => (
-          <ThemedText style={[Typography.heading3, styles.sectionHeader, { color: placeholderColor }]}>
-            {section.title}
-          </ThemedText>
+          <View style={styles.sectionHeaderContainer}>
+            <View style={[styles.sectionDot, { backgroundColor: primaryColor }]} />
+            <ThemedText style={[Typography.captionBold, styles.sectionHeader, { color: placeholderColor }]}>
+              {section.title}
+            </ThemedText>
+          </View>
         )}
+        ListHeaderComponent={
+          <View style={[styles.header, { paddingTop: insets.top + Spacing.base }]}>
+            <ThemedText style={styles.appTitle}>Ouri</ThemedText>
+          </View>
+        }
         contentContainerStyle={styles.list}
         stickySectionHeadersEnabled={false}
         onRefresh={refresh}
-        refreshing={loading}
+        refreshing={refreshing}
       />
       <FAB onPress={() => router.push('/trip/create')} />
     </ThemedView>
@@ -87,13 +101,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
+  },
+  appTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    color: '#C4654A',
+  },
   list: {
-    padding: Spacing.base,
+    paddingHorizontal: Spacing.base,
     paddingBottom: 100,
   },
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+  },
+  sectionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   sectionHeader: {
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   cardWrapper: {
     marginBottom: Spacing.base,

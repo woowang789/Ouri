@@ -16,7 +16,7 @@ import * as memoService from '@/services/memo';
 import { formatShortDate } from '@/utils/date';
 import { AddMemoModal } from '@/components/memo/AddMemoModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Spacing } from '@/constants/theme';
+import { Spacing, BorderRadius } from '@/constants/theme';
 import type { Photo } from '@/types/photo';
 import type { Memo } from '@/types/memo';
 
@@ -129,15 +129,17 @@ export default function PhotoViewerScreen() {
         <>
           {/* 상단 바 */}
           <View style={[styles.topBar, { paddingTop: insets.top + Spacing.sm }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Ionicons name="close" size={28} color="#fff" />
+            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.closeButton}>
+              <Ionicons name="close" size={22} color="#fff" />
             </Pressable>
             {photos.length > 0 && (
-              <Text style={styles.pageCounter}>
-                {currentIndex + 1} / {photos.length}
-              </Text>
+              <View style={styles.pageCounterContainer}>
+                <Text style={styles.pageCounter}>
+                  {currentIndex + 1} / {photos.length}
+                </Text>
+              </View>
             )}
-            <View style={{ width: 28 }} />
+            <View style={{ width: 36 }} />
           </View>
 
           {/* 하단 정보 */}
@@ -145,14 +147,14 @@ export default function PhotoViewerScreen() {
             <View style={[styles.bottomBar, { paddingBottom: insets.bottom + Spacing.base }]}>
               {/* 촬영 정보 */}
               <View style={styles.infoRow}>
-                <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.8)" />
+                <Ionicons name="calendar" size={14} color="rgba(255,255,255,0.7)" />
                 <Text style={styles.infoText}>
                   {formatShortDate(currentPhoto.takenAt)}
                 </Text>
               </View>
               {currentPhoto.takenLocationName && (
                 <View style={styles.infoRow}>
-                  <Ionicons name="location-outline" size={14} color="rgba(255,255,255,0.8)" />
+                  <Ionicons name="location" size={14} color="rgba(255,255,255,0.7)" />
                   <Text style={styles.infoText}>
                     {currentPhoto.takenLocationName}
                   </Text>
@@ -165,7 +167,7 @@ export default function PhotoViewerScreen() {
                   style={styles.memoContainer}
                   onLongPress={() => setShowDeleteDialog(true)}
                 >
-                  <Ionicons name="document-text-outline" size={14} color="rgba(255,255,255,0.8)" />
+                  <Ionicons name="chatbubble-ellipses" size={14} color="rgba(255,255,255,0.7)" />
                   <Text style={styles.memoText} numberOfLines={3}>
                     {memo.content}
                   </Text>
@@ -175,8 +177,10 @@ export default function PhotoViewerScreen() {
                   style={styles.addMemoButton}
                   onPress={() => setShowMemoModal(true)}
                 >
-                  <Ionicons name="create-outline" size={14} color="rgba(255,255,255,0.6)" />
-                  <Text style={styles.addMemoText}>메모 추가</Text>
+                  <View style={styles.addMemoPill}>
+                    <Ionicons name="create-outline" size={14} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.addMemoText}>메모 남기기</Text>
+                  </View>
                 </Pressable>
               )}
             </View>
@@ -206,7 +210,7 @@ export default function PhotoViewerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#0A0908',
   },
   topBar: {
     position: 'absolute',
@@ -218,21 +222,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.base,
     paddingBottom: Spacing.sm,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(10,9,8,0.5)',
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageCounterContainer: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
   },
   pageCounter: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
+    letterSpacing: 1,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    backgroundColor: 'rgba(10,9,8,0.6)',
     gap: Spacing.xs,
   },
   infoRow: {
@@ -241,17 +260,17 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   infoText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 14,
   },
   memoContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.xs,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: 'rgba(255,255,255,0.15)',
   },
   memoText: {
     flex: 1,
@@ -260,16 +279,24 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   addMemoButton: {
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+  },
+  addMemoPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.xs,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.2)',
+    gap: Spacing.xs,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
   },
   addMemoText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

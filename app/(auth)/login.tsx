@@ -1,40 +1,43 @@
 import { StyleSheet, View } from 'react-native';
-import { Link } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
 import { SocialLoginButton } from '@/components/auth/SocialLoginButton';
 import { useAuth } from '@/stores/authStore';
-import { Spacing, Typography } from '@/constants/theme';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 
 export default function LoginScreen() {
-  const { mockLogin } = useAuth();
+  const { mockGoogleLogin } = useAuth();
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const primaryColor = useThemeColor({}, 'primary');
+  const primaryLightColor = useThemeColor({}, 'primaryLight');
+  const borderColor = useThemeColor({}, 'border');
 
   return (
     <ThemedView style={styles.container}>
-      {/* 상단: 앱 로고/타이틀 */}
+      {/* 로고 */}
       <View style={styles.header}>
-        <ThemedText style={styles.logo}>Ouri</ThemedText>
-        <ThemedText style={styles.subtitle}>
+        <View style={[styles.iconContainer, { backgroundColor: primaryLightColor }]}>
+          <Ionicons name="airplane" size={40} color={primaryColor} />
+        </View>
+        <ThemedText style={[Typography.heading1, styles.logo]}>Ouri</ThemedText>
+        <ThemedText style={[Typography.body, { color: placeholderColor }]}>
           여행의 순간을 함께 기록하세요
         </ThemedText>
       </View>
 
-      {/* 중앙: 소셜 로그인 버튼 */}
-      <View style={styles.buttons}>
-        <SocialLoginButton provider="google" onPress={mockLogin} />
-        <SocialLoginButton provider="apple" onPress={mockLogin} />
+      {/* 소셜 로그인 */}
+      <View style={[styles.loginSection, { borderColor }]}>
+        <ThemedText style={[Typography.captionBold, styles.sectionLabel, { color: placeholderColor }]}>
+          시작하기
+        </ThemedText>
+        <View style={styles.buttons}>
+          <SocialLoginButton onPress={mockGoogleLogin} />
+        </View>
       </View>
 
-      {/* 하단: 회원가입 링크 */}
-      <View style={styles.footer}>
-        <ThemedText style={Typography.caption}>
-          계정이 없으신가요?{' '}
-          <Link href="/(auth)/signup">
-            <ThemedText style={styles.link}>회원가입</ThemedText>
-          </Link>
-        </ThemedText>
-      </View>
     </ThemedView>
   );
 }
@@ -47,28 +50,32 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: Spacing.xxxl,
+  },
+  iconContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
   },
   logo: {
-    fontSize: 40,
-    lineHeight: 56,
-    fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 1,
+    marginBottom: Spacing.sm,
   },
-  subtitle: {
-    marginTop: Spacing.sm,
-    opacity: 0.6,
-    fontSize: 15,
+  loginSection: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.base,
+  },
+  sectionLabel: {
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   buttons: {
     gap: Spacing.md,
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  link: {
-    fontWeight: '600',
-    textDecorationLine: 'underline',
   },
 });

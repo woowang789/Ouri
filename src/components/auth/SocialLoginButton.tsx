@@ -1,80 +1,26 @@
-import { Pressable, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ui/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { BorderRadius, Spacing, Typography } from '@/constants/theme';
 
-type Provider = 'google' | 'apple';
-
 interface SocialLoginButtonProps {
-  provider: Provider;
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
 }
 
-const providerConfig = {
-  google: {
-    label: 'Google로 계속하기',
-    icon: 'logo-google' as const,
-  },
-  apple: {
-    label: 'Apple로 계속하기',
-    icon: 'logo-apple' as const,
-  },
-};
-
 export function SocialLoginButton({
-  provider,
   onPress,
   loading = false,
   disabled = false,
 }: SocialLoginButtonProps) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const config = providerConfig[provider];
   const isDisabled = disabled || loading;
-
-  // provider별 스타일 결정
-  const getProviderStyle = (): { container: ViewStyle; textColor: string; iconColor: string } => {
-    if (provider === 'google') {
-      return {
-        container: {
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: '#DADCE0',
-        },
-        textColor: '#333333',
-        iconColor: '#4285F4',
-      };
-    }
-    // Apple: 다크모드 대응
-    if (colorScheme === 'dark') {
-      return {
-        container: {
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: '#FFFFFF',
-        },
-        textColor: '#000000',
-        iconColor: '#000000',
-      };
-    }
-    return {
-      container: {
-        backgroundColor: '#000000',
-      },
-      textColor: '#FFFFFF',
-      iconColor: '#FFFFFF',
-    };
-  };
-
-  const { container: providerStyle, textColor, iconColor } = getProviderStyle();
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.base,
-        providerStyle,
+        styles.google,
         isDisabled && styles.disabled,
         pressed && !isDisabled && styles.pressed,
       ]}
@@ -82,12 +28,12 @@ export function SocialLoginButton({
       disabled={isDisabled}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} size="small" />
+        <ActivityIndicator color="#2D2926" size="small" />
       ) : (
         <>
-          <Ionicons name={config.icon} size={20} color={iconColor} style={styles.icon} />
-          <ThemedText style={[Typography.bodyBold, { color: textColor }]}>
-            {config.label}
+          <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.icon} />
+          <ThemedText style={[Typography.bodyBold, { color: '#2D2926' }]}>
+            Google로 계속하기
           </ThemedText>
         </>
       )}
@@ -100,16 +46,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.md + 2,
     paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.md,
-    minHeight: 48,
+    minHeight: 50,
+  },
+  google: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0DBD4',
   },
   icon: {
     marginRight: Spacing.sm,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
   },
   disabled: {
     opacity: 0.5,

@@ -4,15 +4,12 @@ import { mockUser } from '@/mocks/user';
 
 interface AuthState {
   isLoggedIn: boolean;
-  isDriveConnected: boolean;
   user: User | null;
 }
 
 interface AuthContextType extends AuthState {
-  mockLogin: () => void;
+  mockGoogleLogin: () => void;
   mockLogout: () => void;
-  mockConnectDrive: () => void;
-  mockSignup: (nickname: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -20,53 +17,31 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     isLoggedIn: false,
-    isDriveConnected: false,
     user: null,
   });
 
-  const mockLogin = useCallback(() => {
+  // Google 로그인 + Drive scope 동시 요청 시뮬레이션
+  const mockGoogleLogin = useCallback(() => {
     setState({
       isLoggedIn: true,
-      isDriveConnected: false,
-      user: { ...mockUser, googleDriveConnected: false },
+      user: {
+        ...mockUser,
+        nickname: '구글 사용자',
+        googleDriveConnected: true,
+        googleDriveFolderId: 'mock-folder-id',
+      },
     });
   }, []);
 
   const mockLogout = useCallback(() => {
     setState({
       isLoggedIn: false,
-      isDriveConnected: false,
       user: null,
     });
   }, []);
 
-  const mockSignup = useCallback((nickname: string) => {
-    setState({
-      isLoggedIn: true,
-      isDriveConnected: false,
-      user: {
-        id: `user-${Date.now()}`,
-        nickname,
-        googleDriveConnected: false,
-        googleDriveFolderId: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    });
-  }, []);
-
-  const mockConnectDrive = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      isDriveConnected: true,
-      user: prev.user
-        ? { ...prev.user, googleDriveConnected: true, googleDriveFolderId: 'mock-folder-id' }
-        : null,
-    }));
-  }, []);
-
   return (
-    <AuthContext.Provider value={{ ...state, mockLogin, mockLogout, mockConnectDrive, mockSignup }}>
+    <AuthContext.Provider value={{ ...state, mockGoogleLogin, mockLogout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -28,6 +28,7 @@ export function Button({
 }: ButtonProps) {
   const primary = useThemeColor({}, 'primary');
   const disabledColor = useThemeColor({}, 'disabled');
+  const errorColor = useThemeColor({}, 'error');
 
   const isDisabled = disabled || loading;
 
@@ -46,7 +47,7 @@ export function Button({
     textColor = isDisabled ? disabledColor : primary;
   } else {
     containerStyle.push({ backgroundColor: 'transparent' });
-    textColor = isDisabled ? disabledColor : primary;
+    textColor = isDisabled ? disabledColor : errorColor;
   }
 
   if (style) containerStyle.push(style);
@@ -75,14 +76,15 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.md + 2,
     paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 50,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
 });

@@ -6,12 +6,19 @@ import * as tripService from '@/services/trip';
 export function useTrips() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
     const data = await tripService.getTrips();
     setTrips(data);
     setLoading(false);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    const data = await tripService.getTrips();
+    setTrips(data);
+    setRefreshing(false);
   }, []);
 
   // 화면이 포커스될 때마다 최신 데이터 로드
@@ -38,5 +45,5 @@ export function useTrips() {
     [load]
   );
 
-  return { trips, loading, refresh: load, createTrip, deleteTrip };
+  return { trips, loading, refreshing, refresh, createTrip, deleteTrip };
 }

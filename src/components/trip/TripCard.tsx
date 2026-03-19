@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { formatDateRange } from '@/utils/date';
 import type { Trip } from '@/types/trip';
 
@@ -17,6 +17,7 @@ interface TripCardProps {
 export function TripCard({ trip, coverPhotoUrl, onPress }: TripCardProps) {
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
+  const surfaceMutedColor = useThemeColor({}, 'surfaceMuted');
 
   return (
     <Pressable onPress={onPress}>
@@ -27,11 +28,11 @@ export function TripCard({ trip, coverPhotoUrl, onPress }: TripCardProps) {
               source={{ uri: coverPhotoUrl }}
               style={styles.cover}
               contentFit="cover"
-              transition={200}
+              transition={300}
             />
           ) : (
-            <View style={[styles.cover, styles.placeholder, { backgroundColor: placeholderColor + '20' }]}>
-              <Ionicons name="image-outline" size={40} color={placeholderColor} />
+            <View style={[styles.cover, styles.placeholder, { backgroundColor: surfaceMutedColor }]}>
+              <Ionicons name="image-outline" size={36} color={placeholderColor} />
             </View>
           )}
           <View style={styles.info}>
@@ -40,13 +41,13 @@ export function TripCard({ trip, coverPhotoUrl, onPress }: TripCardProps) {
             </ThemedText>
             <View style={styles.meta}>
               <View style={styles.metaItem}>
-                <Ionicons name="calendar-outline" size={14} color={primaryColor} />
+                <Ionicons name="calendar" size={13} color={primaryColor} />
                 <ThemedText style={[Typography.caption, { color: placeholderColor }]}>
                   {formatDateRange(trip.startDate, trip.endDate)}
                 </ThemedText>
               </View>
               <View style={styles.metaItem}>
-                <Ionicons name="location-outline" size={14} color={primaryColor} />
+                <Ionicons name="location" size={13} color={primaryColor} />
                 <ThemedText style={[Typography.caption, { color: placeholderColor }]} numberOfLines={1}>
                   {trip.locationName}
                 </ThemedText>
@@ -65,12 +66,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
   cover: {
     width: '100%',
-    height: 180,
+    height: 200,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
   },
   placeholder: {
     alignItems: 'center',

@@ -9,7 +9,7 @@ import { PhotoGrid } from '@/components/photo/PhotoGrid';
 import { useTrip } from '@/hooks/useTrip';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { getPhotoIdsWithMemo } from '@/services/memo';
-import { toDateString } from '@/utils/date';
+import { toDateString, toFriendlyDateHeader } from '@/utils/date';
 import { Spacing, Typography } from '@/constants/theme';
 import type { Photo } from '@/types/photo';
 
@@ -63,7 +63,7 @@ export default function TripDetailScreen() {
         <ThemedText
           style={[Typography.captionBold, styles.dateHeader, { color: placeholderColor }]}
         >
-          {section.title}
+          {toFriendlyDateHeader(section.title)}
         </ThemedText>
         <View style={styles.photoGridWrapper}>
           <PhotoGrid
@@ -138,9 +138,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateHeader: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.base,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
+    letterSpacing: 0.3,
   },
   photoGridWrapper: {
     marginBottom: Spacing.sm,

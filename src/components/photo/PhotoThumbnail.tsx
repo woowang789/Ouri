@@ -22,7 +22,7 @@ export function PhotoThumbnail({ photo, size = 110, hasMemo, onPress }: PhotoThu
       />
       {hasMemo && (
         <View style={styles.memoBadge}>
-          <Ionicons name="document-text" size={12} color="#fff" />
+          <Ionicons name="chatbubble-ellipses" size={10} color="#fff" />
         </View>
       )}
     </Pressable>
@@ -31,19 +31,20 @@ export function PhotoThumbnail({ photo, size = 110, hasMemo, onPress }: PhotoThu
 
 const styles = StyleSheet.create({
   image: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
   memoBadge: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(196,101,74,0.85)',
+    borderRadius: BorderRadius.full,
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },

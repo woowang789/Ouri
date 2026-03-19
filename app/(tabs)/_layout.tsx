@@ -8,23 +8,37 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
         tabBarStyle: Platform.select({
-          ios: { position: 'absolute' },
-          default: {},
+          ios: {
+            position: 'absolute',
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            borderTopWidth: 0.5,
+          },
+          default: {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+          },
         }),
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: '홈',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -32,8 +46,8 @@ export default function TabLayout() {
         name="map"
         options={{
           title: '지도',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'map' : 'map-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -42,8 +56,18 @@ export default function TabLayout() {
         options={{
           title: '마이',
           headerShown: true,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          headerTitle: '마이페이지',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerShadowVisible: false,
+          headerTitleStyle: {
+            color: colors.text,
+            fontWeight: '600',
+            fontSize: 17,
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
           ),
         }}
       />

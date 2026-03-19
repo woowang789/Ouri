@@ -13,7 +13,7 @@ Ouri(우리) - 여행/데이트 사진을 Google Drive에 저장하여 데이터
 - **라우팅**: Expo Router v6 (파일 기반, `app/` 디렉터리)
 - **백엔드**: Supabase (Auth, PostgreSQL + RLS)
 - **스토리지**: Google Drive API v3 (사진), expo-sqlite (오프라인 캐시)
-- **인증**: Google Sign-In + Apple Authentication → Supabase Auth
+- **인증**: Google Sign-In → Supabase Auth (Drive scope 동시 요청)
 - **지도/장소**: react-native-maps, 카카오 로컬 API
 
 ## 개발 명령어
@@ -40,9 +40,8 @@ npm run lint       # ESLint 실행
 - 경로 별칭: `@/*` → `src/*`
 
 ### 라우팅 구조 (`app/`)
-- `app/_layout.tsx` - RootLayout: 인증/Drive 상태에 따른 라우팅 분기
-- `app/(auth)/` - 비로그인 사용자 (로그인, 회원가입)
-- `app/(drive)/` - Drive 미연동 사용자 (연동 페이지)
+- `app/_layout.tsx` - RootLayout: 인증 상태에 따른 2단계 라우팅 분기 (비로그인 → auth, 로그인 → tabs)
+- `app/(auth)/` - 비로그인 사용자 (Google 로그인)
 - `app/(tabs)/` - 메인 탭 (홈 타임라인, 지도, 마이페이지)
 - `app/trip/` - 여행 스택 (생성, 상세, 사진 뷰어)
 
@@ -50,7 +49,7 @@ npm run lint       # ESLint 실행
 - `src/components/` - 도메인별 UI 컴포넌트 (`ui/`, `trip/`, `photo/`, `memo/`, `map/`, `auth/`)
 - `src/services/` - 외부 API 호출 계층 (Supabase, Drive, 카카오 등)
 - `src/hooks/` - 커스텀 훅 (useAuth, useTrips, usePhotos 등)
-- `src/stores/` - 전역 상태 관리 (authStore, driveStore)
+- `src/stores/` - 전역 상태 관리 (authStore — 인증 + Drive 연동 상태 통합)
 - `src/types/` - TypeScript 타입 정의 (PRD 데이터 모델 기반)
 - `src/constants/` - 테마, 설정값
 - `src/utils/` - 유틸리티 (날짜, 좌표, 쓰로틀링)

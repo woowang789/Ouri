@@ -58,3 +58,14 @@ export function groupTripsByMonth(
 export function toDateString(isoStr: string): string {
   return isoStr.split('T')[0];
 }
+
+// 날짜를 "3월 15일 토요일" 형식으로 포맷 (여행 상세용)
+const DAY_NAMES = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+export function toFriendlyDateHeader(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const dayName = DAY_NAMES[date.getDay()];
+  return `${month}월 ${day}일 ${dayName}`;
+}

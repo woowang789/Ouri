@@ -9,7 +9,7 @@ interface PhotoGridProps {
   onPhotoPress: (photo: Photo) => void;
 }
 
-const GAP = Spacing.xs;
+const GAP = Spacing.sm;
 const PADDING = Spacing.base;
 const COLUMNS = 3;
 
