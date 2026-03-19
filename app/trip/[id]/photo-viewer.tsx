@@ -54,13 +54,14 @@ export default function PhotoViewerScreen() {
   const currentPhoto = photos[currentIndex];
 
   // 현재 사진의 메모 로드
+  const currentPhotoId = currentPhoto?.id;
   useEffect(() => {
-    if (!currentPhoto) return;
+    if (!currentPhotoId) return;
     (async () => {
-      const memos = await memoService.getMemosByPhoto(currentPhoto.id);
+      const memos = await memoService.getMemosByPhoto(currentPhotoId);
       setMemo(memos.length > 0 ? memos[0] : null);
     })();
-  }, [currentPhoto?.id]);
+  }, [currentPhotoId]);
 
   const handleViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: { index: number | null }[] }) => {
