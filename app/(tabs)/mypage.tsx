@@ -11,7 +11,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 
 export default function MypageScreen() {
-  const { user, mockLogout } = useAuth();
+  const { user, logout } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const primaryColor = useThemeColor({}, 'primary');
@@ -134,7 +134,7 @@ export default function MypageScreen() {
         destructive
         onConfirm={() => {
           setShowLogoutDialog(false);
-          mockLogout();
+          logout();
         }}
         onCancel={() => setShowLogoutDialog(false)}
       />

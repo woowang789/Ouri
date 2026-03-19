@@ -9,11 +9,16 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 
 export default function LoginScreen() {
-  const { mockGoogleLogin } = useAuth();
+  const { login, isLoading, error, clearError } = useAuth();
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
   const primaryLightColor = useThemeColor({}, 'primaryLight');
   const borderColor = useThemeColor({}, 'border');
+
+  const handleLogin = () => {
+    clearError();
+    login();
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -28,13 +33,20 @@ export default function LoginScreen() {
         </ThemedText>
       </View>
 
+      {/* 에러 메시지 */}
+      {error && (
+        <View style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>{error}</ThemedText>
+        </View>
+      )}
+
       {/* 소셜 로그인 */}
       <View style={[styles.loginSection, { borderColor }]}>
         <ThemedText style={[Typography.captionBold, styles.sectionLabel, { color: placeholderColor }]}>
           시작하기
         </ThemedText>
         <View style={styles.buttons}>
-          <SocialLoginButton onPress={mockGoogleLogin} />
+          <SocialLoginButton onPress={handleLogin} loading={isLoading} />
         </View>
       </View>
 
@@ -63,6 +75,17 @@ const styles = StyleSheet.create({
   logo: {
     letterSpacing: 1,
     marginBottom: Spacing.sm,
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  errorText: {
+    color: '#DC2626',
+    textAlign: 'center',
+    fontSize: 14,
   },
   loginSection: {
     borderWidth: 1,
