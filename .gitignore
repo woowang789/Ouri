@@ -48,3 +48,12 @@ app-example
 
 # 문서파일
 /docs
+
+#개인 mcp
+.claude/settings.local.json
+.mcp.json
+shrimp_data/
+shrimp-rules.md
+
+#test
+/test-screenshots
