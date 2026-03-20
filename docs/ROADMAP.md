@@ -353,9 +353,9 @@ Ouri/
 
 ### 6-1. 오프라인 캐시
 
-- [ ] expo-sqlite 로컬 캐시 구현 (여행 목록, 메모)
-- [ ] 오프라인 상태 감지 및 UI 표시
-- [ ] 역지오코딩 실패 시 NULL 저장 → 네트워크 복구 시 백필
+- [x] expo-sqlite 로컬 캐시 구현 (여행 목록, 사진 메타데이터, 메모)
+- [x] 오프라인 상태 감지 및 UI 표시 (@react-native-community/netinfo + OfflineBanner)
+- [x] 역지오코딩 실패 시 NULL 저장 → 네트워크 복구 시 백필 (pending_geocode + useGeocodeBackfill)
 
 ### 6-2. 성능 최적화
 

@@ -10,9 +10,17 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/stores/authStore';
 import { ToastProvider } from '@/components/ui/Toast';
 import { useDriveStatusToast } from '@/hooks/useDriveStatusToast';
+import { getDatabase } from '@/services/cache/database';
 
 // 세션 복원 완료 전까지 스플래시 유지
 SplashScreen.preventAutoHideAsync();
+
+// 앱 시작 시 SQLite 캐시 DB 초기화
+try {
+  getDatabase();
+} catch (e) {
+  console.warn('캐시 DB 초기화 실패:', e);
+}
 
 // 따뜻한 톤의 커스텀 네비게이션 테마
 const OuriLightTheme: Theme = {

@@ -2,6 +2,7 @@ import type { Photo } from '@/types/photo';
 import { supabase } from './supabase';
 import { uploadFileToDrive, deleteDriveFile } from './drive';
 import { deleteMemosByPhoto } from './memo';
+import { addPendingGeocode } from './cache/geocodeBackfill';
 
 // DB 스네이크케이스 → 앱 카멜케이스 변환
 function mapDbPhotoToPhoto(row: {
@@ -95,6 +96,11 @@ export async function uploadPhoto(data: {
     .single();
 
   if (error) throw new Error(`사진 메타데이터 저장 실패: ${error.message}`);
+
+  // 역지오코딩 실패(장소명 없음) + 좌표 있음 → 백필 대상 등록
+  if (!data.takenLocationName && data.takenLat != null && data.takenLng != null) {
+    addPendingGeocode(created.id, data.takenLat, data.takenLng);
+  }
 
   // 첫 사진이면 자동 커버 설정
   const { data: tripData } = await supabase

@@ -5,12 +5,17 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import OfflineBanner from '@/components/ui/OfflineBanner';
+import { useGeocodeBackfill } from '@/hooks/useGeocodeBackfill';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  useGeocodeBackfill();
 
   return (
+    <>
+    <OfflineBanner />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
@@ -72,5 +77,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </>
   );
 }

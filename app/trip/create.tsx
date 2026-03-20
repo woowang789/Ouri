@@ -20,6 +20,8 @@ export default function TripCreateScreen() {
         locationLng: data.locationLng,
       });
 
+      if (!trip) return;
+
       // 선택한 사진들을 순차 업로드 (Drive 레이트 리밋 대응)
       for (const photo of data.photos) {
         await photoService.uploadPhoto({
