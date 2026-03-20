@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from 'react';
 import type { User } from '@/types/user';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {
   configureGoogleSignIn,
   loginWithGoogle,
@@ -43,7 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     configureGoogleSignIn();
 
     getCurrentUser()
-      .then((user) => {
+      .then(async (user) => {
+        // Supabase 세션이 있으면 Google 토큰도 복원
+        if (user) {
+          try {
+            await GoogleSignin.signInSilently();
+          } catch {
+            // 실패해도 로그인 상태는 유지 (Drive 기능만 제한)
+            console.warn('Google 토큰 자동 복원 실패');
+          }
+        }
         setState({
           isLoggedIn: !!user,
           user,

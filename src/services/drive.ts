@@ -14,7 +14,14 @@ export async function getAccessToken(): Promise<string> {
     const tokens = await GoogleSignin.getTokens();
     return tokens.accessToken;
   } catch {
-    throw new Error('Google 액세스 토큰을 가져올 수 없습니다');
+    // 토큰이 없거나 만료된 경우 자동 갱신 시도
+    try {
+      await GoogleSignin.signInSilently();
+      const tokens = await GoogleSignin.getTokens();
+      return tokens.accessToken;
+    } catch {
+      throw new Error('Google 액세스 토큰을 가져올 수 없습니다');
+    }
   }
 }
 
