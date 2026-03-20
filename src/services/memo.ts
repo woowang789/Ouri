@@ -1,44 +1,87 @@
 import type { Memo } from '@/types/memo';
-import { mockMemos } from '@/mocks/memos';
+import { supabase } from './supabase';
 
-// 메모 서비스 인터페이스
-// Phase 3에서 Supabase로 교체 예정
-
-let memos = [...mockMemos];
-
-export async function getMemosByPhoto(photoId: string): Promise<Memo[]> {
-  return memos
-    .filter((m) => m.photoId === photoId)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-}
-
-export async function createMemo(
-  data: Omit<Memo, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<Memo> {
-  const now = new Date().toISOString();
-  const newMemo: Memo = {
-    ...data,
-    id: `memo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    createdAt: now,
-    updatedAt: now,
+// DB 스네이크케이스 → 앱 카멜케이스 변환
+function mapDbMemoToMemo(row: {
+  id: string;
+  photo_id: string;
+  created_by: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}): Memo {
+  return {
+    id: row.id,
+    photoId: row.photo_id,
+    content: row.content,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
-  memos.push(newMemo);
-  return newMemo;
 }
 
+// 특정 사진의 메모 조회
+export async function getMemosByPhoto(photoId: string): Promise<Memo[]> {
+  const { data, error } = await supabase
+    .from('memos')
+    .select('*')
+    .eq('photo_id', photoId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(`메모 조회 실패: ${error.message}`);
+  return (data ?? []).map(mapDbMemoToMemo);
+}
+
+// 메모 생성 (user_id는 내부에서 자동 획득)
+export async function createMemo(
+  data: { photoId: string; content: string }
+): Promise<Memo> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('로그인이 필요합니다');
+
+  const { data: created, error } = await supabase
+    .from('memos')
+    .insert({
+      photo_id: data.photoId,
+      created_by: user.id,
+      content: data.content,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`메모 생성 실패: ${error.message}`);
+  return mapDbMemoToMemo(created);
+}
+
+// 메모 삭제
 export async function deleteMemo(id: string): Promise<void> {
-  memos = memos.filter((m) => m.id !== id);
+  const { error } = await supabase
+    .from('memos')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw new Error(`메모 삭제 실패: ${error.message}`);
 }
 
+// 사진 삭제 시 관련 메모 일괄 삭제
 export async function deleteMemosByPhoto(photoId: string): Promise<void> {
-  memos = memos.filter((m) => m.photoId !== photoId);
+  const { error } = await supabase
+    .from('memos')
+    .delete()
+    .eq('photo_id', photoId);
+
+  if (error) throw new Error(`사진 메모 삭제 실패: ${error.message}`);
 }
 
+// 메모가 있는 사진 ID 집합 반환 (뱃지 표시용)
 export async function getPhotoIdsWithMemo(photoIds: string[]): Promise<Set<string>> {
-  const idSet = new Set(photoIds);
-  const result = new Set<string>();
-  for (const m of memos) {
-    if (idSet.has(m.photoId)) result.add(m.photoId);
-  }
-  return result;
+  if (photoIds.length === 0) return new Set();
+
+  const { data, error } = await supabase
+    .from('memos')
+    .select('photo_id')
+    .in('photo_id', photoIds);
+
+  if (error) throw new Error(`메모 존재 여부 조회 실패: ${error.message}`);
+  return new Set((data ?? []).map((r: { photo_id: string }) => r.photo_id));
 }

@@ -9,7 +9,7 @@ import { DateRangePicker } from '@/components/trip/DateRangePicker';
 import { PlaceSearchInput } from '@/components/trip/PlaceSearchInput';
 import { PhotoPickerGrid } from '@/components/photo/PhotoPickerGrid';
 import { AddPhotoSheet } from '@/components/photo/AddPhotoSheet';
-import { mockPickPhotos } from '@/mocks/selectedPhotos';
+import { usePhotoPicker } from '@/hooks/usePhotoPicker';
 import { extractTripMetadata } from '@/utils/tripMetadata';
 import { Spacing, Typography } from '@/constants/theme';
 import type { SelectedPhoto } from '@/types/photo';
@@ -55,6 +55,7 @@ export function TripForm({
   const [step, setStep] = useState<Step>(initialStep);
   const [photos, setPhotos] = useState<SelectedPhoto[]>(initialPhotos);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const { pickFromGallery, takePhoto } = usePhotoPicker();
 
   const [title, setTitle] = useState(initialTitle);
   const [startDate, setStartDate] = useState<string | null>(initialStartDate);
@@ -63,10 +64,17 @@ export function TripForm({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // 사진 선택 (mock)
-  const handlePickFromGallery = () => {
-    const picked = mockPickPhotos(4);
-    setPhotos((prev) => [...prev, ...picked]);
+  // 갤러리에서 사진 선택
+  const handlePickFromGallery = async () => {
+    const picked = await pickFromGallery();
+    if (picked.length > 0) setPhotos((prev) => [...prev, ...picked]);
+    setSheetVisible(false);
+  };
+
+  // 카메라로 촬영
+  const handleTakePhoto = async () => {
+    const photo = await takePhoto();
+    if (photo) setPhotos((prev) => [...prev, photo]);
     setSheetVisible(false);
   };
 
@@ -249,7 +257,7 @@ export function TripForm({
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         onPickFromGallery={handlePickFromGallery}
-        onTakePhoto={() => setSheetVisible(false)}
+        onTakePhoto={handleTakePhoto}
       />
     </ThemedView>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -58,8 +59,13 @@ export default function PhotoViewerScreen() {
   useEffect(() => {
     if (!currentPhotoId) return;
     (async () => {
-      const memos = await memoService.getMemosByPhoto(currentPhotoId);
-      setMemo(memos.length > 0 ? memos[0] : null);
+      try {
+        const memos = await memoService.getMemosByPhoto(currentPhotoId);
+        setMemo(memos.length > 0 ? memos[0] : null);
+      } catch (e) {
+        console.warn('메모 조회 실패:', e);
+        setMemo(null);
+      }
     })();
   }, [currentPhotoId]);
 
@@ -77,20 +83,28 @@ export default function PhotoViewerScreen() {
   // 메모 추가
   const handleAddMemo = async (content: string) => {
     if (!currentPhoto) return;
-    const newMemo = await memoService.createMemo({
-      photoId: currentPhoto.id,
-      content,
-      createdBy: 'user-001',
-    });
-    setMemo(newMemo);
+    try {
+      const newMemo = await memoService.createMemo({
+        photoId: currentPhoto.id,
+        content,
+      });
+      setMemo(newMemo);
+    } catch (e) {
+      Alert.alert('오류', '메모 저장에 실패했습니다');
+    }
   };
 
   // 메모 삭제
   const handleDeleteMemo = async () => {
     if (!memo) return;
-    await memoService.deleteMemo(memo.id);
-    setMemo(null);
-    setShowDeleteDialog(false);
+    try {
+      await memoService.deleteMemo(memo.id);
+      setMemo(null);
+      setShowDeleteDialog(false);
+    } catch (e) {
+      Alert.alert('오류', '메모 삭제에 실패했습니다');
+      setShowDeleteDialog(false);
+    }
   };
 
   const renderItem = useCallback(

@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ui/ThemedView';
 import { TripForm } from '@/components/trip/TripForm';
@@ -26,38 +27,40 @@ export default function TripEditScreen() {
   }));
 
   const handleSubmit = async (data: TripFormData) => {
-    await updateTrip({
-      title: data.title,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      locationName: data.locationName,
-      locationLat: data.locationLat,
-      locationLng: data.locationLng,
-    });
+    try {
+      await updateTrip({
+        title: data.title,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        locationName: data.locationName,
+        locationLat: data.locationLat,
+        locationLng: data.locationLng,
+      });
 
-    // 새로 추가된 사진만 업로드
-    const newPhotos = data.photos.filter((p) => !existingUris.has(p.localUri));
-    await Promise.all(
-      newPhotos.map((photo) =>
-        photoService.uploadPhoto({
+      // 새로 추가된 사진만 순차 업로드 (Drive 레이트 리밋 대응)
+      const newPhotos = data.photos.filter((p) => !existingUris.has(p.localUri));
+      for (const photo of newPhotos) {
+        await photoService.uploadPhoto({
           tripId: id!,
-          driveFileId: '',
-          driveThumbnailLink: photo.localUri,
+          localUri: photo.localUri,
           takenAt: photo.takenAt ?? new Date().toISOString(),
           takenLat: photo.takenLat,
           takenLng: photo.takenLng,
           takenLocationName: photo.takenLocationName,
-          uploadedBy: 'user-001',
-        })
-      )
-    );
+        });
+      }
 
-    // 삭제된 사진 처리 (폼에서 제거된 기존 사진)
-    const remainingUris = new Set(data.photos.map((p) => p.localUri));
-    const deletedPhotos = photos.filter((p) => !remainingUris.has(p.driveThumbnailLink));
-    await Promise.all(deletedPhotos.map((p) => photoService.deletePhoto(p.id)));
+      // 삭제된 사진 처리 (폼에서 제거된 기존 사진)
+      const remainingUris = new Set(data.photos.map((p) => p.localUri));
+      const deletedPhotos = photos.filter((p) => !remainingUris.has(p.driveThumbnailLink));
+      for (const p of deletedPhotos) {
+        await photoService.deletePhoto(p.id);
+      }
 
-    router.back();
+      router.back();
+    } catch (e) {
+      Alert.alert('오류', e instanceof Error ? e.message : '여행 수정에 실패했습니다');
+    }
   };
 
   return (

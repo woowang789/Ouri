@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
@@ -7,24 +7,22 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/stores/authStore';
+import { useDrive, bytesToGB } from '@/hooks/useDrive';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 
 export default function MypageScreen() {
   const { user, logout } = useAuth();
+  const driveConnected = user?.googleDriveConnected ?? false;
+  const { used, isLoading: driveLoading } = useDrive(driveConnected);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const primaryColor = useThemeColor({}, 'primary');
   const placeholderColor = useThemeColor({}, 'placeholder');
   const successColor = useThemeColor({}, 'success');
+  const warningColor = useThemeColor({}, 'warning');
   const borderColor = useThemeColor({}, 'border');
   const primaryLightColor = useThemeColor({}, 'primaryLight');
-  const surfaceMutedColor = useThemeColor({}, 'surfaceMuted');
-
-  // Mock Drive 용량 데이터
-  const driveUsed = 2.3;
-  const driveTotal = 15;
-  const drivePercent = driveUsed / driveTotal;
 
   // 이니셜 아바타
   const initial = user?.nickname?.charAt(0) ?? '?';
@@ -63,35 +61,36 @@ export default function MypageScreen() {
               </View>
               <ThemedText style={Typography.bodyBold}>Google Drive</ThemedText>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: successColor + '15' }]}>
-              <View style={[styles.statusDot, { backgroundColor: successColor }]} />
-              <ThemedText style={[Typography.small, { color: successColor, fontWeight: '600' }]}>
-                연동됨
+            {driveConnected ? (
+              <View style={[styles.statusBadge, { backgroundColor: successColor + '15' }]}>
+                <View style={[styles.statusDot, { backgroundColor: successColor }]} />
+                <ThemedText style={[Typography.small, { color: successColor, fontWeight: '600' }]}>
+                  연동됨
+                </ThemedText>
+              </View>
+            ) : (
+              <View style={[styles.statusBadge, { backgroundColor: warningColor + '15' }]}>
+                <View style={[styles.statusDot, { backgroundColor: warningColor }]} />
+                <ThemedText style={[Typography.small, { color: warningColor, fontWeight: '600' }]}>
+                  연동 필요
+                </ThemedText>
+              </View>
+            )}
+          </View>
+
+          {driveLoading ? (
+            <ActivityIndicator size="small" color={primaryColor} style={{ paddingVertical: Spacing.sm }} />
+          ) : driveConnected ? (
+            <View style={styles.driveUsage}>
+              <ThemedText style={[Typography.caption, { color: placeholderColor }]}>
+                Ouri 사용량: {bytesToGB(used)}GB
               </ThemedText>
             </View>
-          </View>
-
-          <View style={styles.driveUsage}>
+          ) : (
             <ThemedText style={[Typography.caption, { color: placeholderColor }]}>
-              {driveUsed}GB / {driveTotal}GB 사용 중
+              다시 로그인하면 Google Drive가 자동으로 연동됩니다.
             </ThemedText>
-            <ThemedText style={[Typography.captionBold, { color: primaryColor }]}>
-              {Math.round(drivePercent * 100)}%
-            </ThemedText>
-          </View>
-
-          {/* 프로그레스 바 */}
-          <View style={[styles.progressTrack, { backgroundColor: surfaceMutedColor }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  backgroundColor: primaryColor,
-                  width: `${drivePercent * 100}%`,
-                },
-              ]}
-            />
-          </View>
+          )}
         </Card>
 
         {/* 설정 메뉴 */}
@@ -201,15 +200,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
   },
   menuCard: {
     padding: 0,

@@ -67,11 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
+        // 토큰 갱신 실패 시에도 SIGNED_OUT 이벤트가 발생함
+        // 이전에 로그인 상태였다면 세션 만료로 판단
         setState((prev) => ({
           ...prev,
           isLoggedIn: false,
           user: null,
-          error: null,
+          error: prev.isLoggedIn
+            ? '세션이 만료되었습니다. 다시 로그인해주세요.'
+            : null,
         }));
       }
     });
