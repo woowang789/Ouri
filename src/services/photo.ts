@@ -95,15 +95,30 @@ export async function uploadPhoto(data: {
     .single();
 
   if (error) throw new Error(`사진 메타데이터 저장 실패: ${error.message}`);
+
+  // 첫 사진이면 자동 커버 설정
+  const { data: tripData } = await supabase
+    .from('trips')
+    .select('cover_photo_id')
+    .eq('id', data.tripId)
+    .single();
+
+  if (tripData && !tripData.cover_photo_id) {
+    await supabase
+      .from('trips')
+      .update({ cover_photo_id: created.id, updated_at: new Date().toISOString() })
+      .eq('id', data.tripId);
+  }
+
   return mapDbPhotoToPhoto(created);
 }
 
 // 사진 삭제 (메모 → Drive → Supabase 순서)
 export async function deletePhoto(id: string): Promise<void> {
-  // Drive 파일 ID 조회
+  // Drive 파일 ID 및 trip_id 조회
   const { data: photo, error: fetchError } = await supabase
     .from('photos')
-    .select('drive_file_id')
+    .select('drive_file_id, trip_id')
     .eq('id', id)
     .single();
 
@@ -128,4 +143,30 @@ export async function deletePhoto(id: string): Promise<void> {
     .eq('id', id);
 
   if (error) throw new Error(`사진 삭제 실패: ${error.message}`);
+
+  // 커버 사진이었다면 다음 사진으로 자동 교체
+  if (photo?.trip_id) {
+    const { data: tripAfterDelete } = await supabase
+      .from('trips')
+      .select('cover_photo_id')
+      .eq('id', photo.trip_id)
+      .single();
+
+    if (tripAfterDelete && !tripAfterDelete.cover_photo_id) {
+      const { data: nextPhoto } = await supabase
+        .from('photos')
+        .select('id')
+        .eq('trip_id', photo.trip_id)
+        .order('taken_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (nextPhoto) {
+        await supabase
+          .from('trips')
+          .update({ cover_photo_id: nextPhoto.id, updated_at: new Date().toISOString() })
+          .eq('id', photo.trip_id);
+      }
+    }
+  }
 }

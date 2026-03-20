@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -8,11 +9,12 @@ import type { Trip } from '@/types/trip';
 
 interface TripHeaderProps {
   trip: Trip;
+  coverPhotoUrl?: string;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function TripHeader({ trip, onEdit, onDelete }: TripHeaderProps) {
+export function TripHeader({ trip, coverPhotoUrl, onEdit, onDelete }: TripHeaderProps) {
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
   const errorColor = useThemeColor({}, 'error');
@@ -20,6 +22,16 @@ export function TripHeader({ trip, onEdit, onDelete }: TripHeaderProps) {
 
   return (
     <View style={styles.container}>
+      {/* 커버 이미지 */}
+      {coverPhotoUrl && (
+        <Image
+          source={{ uri: coverPhotoUrl }}
+          style={styles.coverImage}
+          contentFit="cover"
+          transition={300}
+        />
+      )}
+
       {/* 제목 + 액션 */}
       <View style={styles.titleRow}>
         <ThemedText style={[Typography.heading1, styles.title]} numberOfLines={2}>
@@ -56,16 +68,21 @@ export function TripHeader({ trip, onEdit, onDelete }: TripHeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
     paddingBottom: Spacing.base,
     gap: Spacing.md,
+  },
+  coverImage: {
+    height: 220,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.xs,
+    marginHorizontal: Spacing.lg,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
   },
   title: {
     flex: 1,
@@ -84,6 +101,7 @@ const styles = StyleSheet.create({
   },
   metaContainer: {
     gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
   },
   metaItem: {
     flexDirection: 'row',

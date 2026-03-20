@@ -1,13 +1,10 @@
-import { Stack, useRouter } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TripDetailLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const router = useRouter();
 
   return (
     <Stack
@@ -21,12 +18,7 @@ export default function TripDetailLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: '여행 상세',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8 }}>
-              <Ionicons name="chevron-back" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
         }}
       />
       <Stack.Screen name="edit" options={{ title: '여행 수정' }} />

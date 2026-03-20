@@ -101,6 +101,35 @@ export async function updateTrip(
   return mapDbTripToTrip(updated);
 }
 
+export interface CoverPhotoInfo {
+  thumbnailUrl: string;
+  driveFileId: string;
+}
+
+// 여행 목록의 커버 사진 정보 일괄 조회 (썸네일 URL + Drive 파일 ID)
+export async function getCoverPhotos(trips: Trip[]): Promise<Record<string, CoverPhotoInfo>> {
+  const coverPhotoIds = trips
+    .filter(t => t.coverPhotoId)
+    .map(t => t.coverPhotoId!);
+  if (coverPhotoIds.length === 0) return {};
+
+  const { data } = await supabase
+    .from('photos')
+    .select('id, drive_thumbnail_link, drive_file_id')
+    .in('id', coverPhotoIds);
+
+  const photoMap = new Map(
+    data?.map(p => [p.id, { thumbnailUrl: p.drive_thumbnail_link, driveFileId: p.drive_file_id }]) ?? []
+  );
+  const result: Record<string, CoverPhotoInfo> = {};
+  for (const trip of trips) {
+    if (trip.coverPhotoId && photoMap.has(trip.coverPhotoId)) {
+      result[trip.id] = photoMap.get(trip.coverPhotoId)!;
+    }
+  }
+  return result;
+}
+
 export async function deleteTrip(id: string): Promise<void> {
   // 여행에 포함된 사진의 Drive 파일 ID 조회
   const { data: photos } = await supabase

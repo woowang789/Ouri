@@ -6,14 +6,16 @@ import type { Photo } from '@/types/photo';
 interface PhotoGridProps {
   photos: Photo[];
   memoPhotoIds?: Set<string>;
+  coverPhotoId?: string | null;
   onPhotoPress: (photo: Photo) => void;
+  onPhotoLongPress?: (photo: Photo) => void;
 }
 
 const GAP = Spacing.sm;
 const PADDING = Spacing.base;
 const COLUMNS = 3;
 
-export function PhotoGrid({ photos, memoPhotoIds, onPhotoPress }: PhotoGridProps) {
+export function PhotoGrid({ photos, memoPhotoIds, coverPhotoId, onPhotoPress, onPhotoLongPress }: PhotoGridProps) {
   const { width } = useWindowDimensions();
   const size = Math.floor((width - PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS);
 
@@ -25,7 +27,9 @@ export function PhotoGrid({ photos, memoPhotoIds, onPhotoPress }: PhotoGridProps
           photo={photo}
           size={size}
           hasMemo={memoPhotoIds?.has(photo.id)}
+          isCover={photo.id === coverPhotoId}
           onPress={() => onPhotoPress(photo)}
+          onLongPress={() => onPhotoLongPress?.(photo)}
         />
       ))}
     </View>

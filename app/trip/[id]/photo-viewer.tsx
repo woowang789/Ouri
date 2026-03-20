@@ -13,12 +13,15 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPhotos } from '@/services/photo';
+import { updateTrip, getTrip } from '@/services/trip';
 import * as memoService from '@/services/memo';
 import { useDriveImage } from '@/hooks/useDriveImage';
 import { formatShortDate } from '@/utils/date';
 import { AddMemoModal } from '@/components/memo/AddMemoModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { ThemedText } from '@/components/ui/ThemedText';
+import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 import type { Photo } from '@/types/photo';
 import type { Memo } from '@/types/memo';
 
@@ -57,26 +60,32 @@ export default function PhotoViewerScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [initialIndex, setInitialIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showOverlay, setShowOverlay] = useState(true);
   const [memo, setMemo] = useState<Memo | null>(null);
   const [showMemoModal, setShowMemoModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showMoreSheet, setShowMoreSheet] = useState(false);
+  const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const data = await getPhotos(id!);
-      setPhotos(data);
+      const [data, tripData] = await Promise.all([
+        getPhotos(id!),
+        getTrip(id!),
+      ]);
 
+      let idx = 0;
       if (photoId) {
-        const idx = data.findIndex((p) => p.id === photoId);
-        if (idx >= 0) {
-          setCurrentIndex(idx);
-          setTimeout(() => {
-            flatListRef.current?.scrollToIndex({ index: idx, animated: false });
-          }, 100);
-        }
+        const found = data.findIndex((p) => p.id === photoId);
+        if (found >= 0) idx = found;
       }
+
+      setInitialIndex(idx);
+      setCurrentIndex(idx);
+      setPhotos(data);
+      setCoverPhotoId(tripData?.coverPhotoId ?? null);
     })();
   }, [id, photoId]);
 
@@ -107,6 +116,19 @@ export default function PhotoViewerScreen() {
   );
 
   const toggleOverlay = () => setShowOverlay((prev) => !prev);
+
+  // 커버 사진 설정
+  const handleSetCover = async () => {
+    if (!currentPhoto) return;
+    try {
+      await updateTrip(id!, { coverPhotoId: currentPhoto.id });
+      setCoverPhotoId(currentPhoto.id);
+      setShowMoreSheet(false);
+    } catch {
+      Alert.alert('오류', '커버 사진 설정에 실패했습니다');
+      setShowMoreSheet(false);
+    }
+  };
 
   // 메모 추가
   const handleAddMemo = async (content: string) => {
@@ -159,6 +181,7 @@ export default function PhotoViewerScreen() {
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+        initialScrollIndex={initialIndex}
         getItemLayout={(_, index) => ({
           length: width,
           offset: width * index,
@@ -180,7 +203,13 @@ export default function PhotoViewerScreen() {
                 </Text>
               </View>
             )}
-            <View style={{ width: 36 }} />
+            <Pressable
+              onPress={() => setShowMoreSheet(true)}
+              hitSlop={12}
+              style={styles.moreButton}
+            >
+              <Ionicons name="ellipsis-horizontal" size={22} color="#fff" />
+            </Pressable>
           </View>
 
           {/* 하단 정보 */}
@@ -244,6 +273,28 @@ export default function PhotoViewerScreen() {
         onConfirm={handleDeleteMemo}
         onCancel={() => setShowDeleteDialog(false)}
       />
+
+      <BottomSheet visible={showMoreSheet} onClose={() => setShowMoreSheet(false)}>
+        <Pressable
+          onPress={handleSetCover}
+          style={({ pressed }) => [styles.sheetActionItem, pressed && { opacity: 0.6 }]}
+          disabled={currentPhoto?.id === coverPhotoId}
+        >
+          <Ionicons
+            name={currentPhoto?.id === coverPhotoId ? 'checkmark-circle' : 'image-outline'}
+            size={20}
+            color={currentPhoto?.id === coverPhotoId ? '#999' : '#333'}
+          />
+          <ThemedText
+            style={[
+              Typography.body,
+              currentPhoto?.id === coverPhotoId && { color: '#999' },
+            ]}
+          >
+            {currentPhoto?.id === coverPhotoId ? '현재 커버 사진' : '커버 사진으로 설정'}
+          </ThemedText>
+        </Pressable>
+      </BottomSheet>
     </View>
   );
 }
@@ -339,5 +390,20 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     fontSize: 13,
     fontWeight: '500',
+  },
+  moreButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetActionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.sm,
   },
 });

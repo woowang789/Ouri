@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { ThemedView } from '@/components/ui/ThemedView';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TripHeader } from '@/components/trip/TripHeader';
 import { PhotoGrid } from '@/components/photo/PhotoGrid';
 import { useTrip } from '@/hooks/useTrip';
@@ -16,12 +19,15 @@ import type { Photo } from '@/types/photo';
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { trip, photos, loading, deleteTrip } = useTrip(id!);
+  const insets = useSafeAreaInsets();
+  const { trip, photos, loading, updateTrip, deleteTrip } = useTrip(id!);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [memoPhotoIds, setMemoPhotoIds] = useState<Set<string>>(new Set());
+  const [actionPhoto, setActionPhoto] = useState<Photo | null>(null);
 
   const placeholderColor = useThemeColor({}, 'placeholder');
+  const textColor = useThemeColor({}, 'text');
 
   // 메모가 있는 사진 ID 로드
   useEffect(() => {
@@ -50,6 +56,18 @@ export default function TripDetailScreen() {
       }));
   }, [photos]);
 
+  // 커버 사진 설정
+  const handleSetCover = async () => {
+    if (!actionPhoto || !trip) return;
+    try {
+      await updateTrip({ coverPhotoId: actionPhoto.id });
+      setActionPhoto(null);
+    } catch {
+      Alert.alert('오류', '커버 사진 설정에 실패했습니다');
+      setActionPhoto(null);
+    }
+  };
+
   // 여행 삭제
   const handleDeleteTrip = async () => {
     setShowDeleteDialog(false);
@@ -69,14 +87,16 @@ export default function TripDetailScreen() {
           <PhotoGrid
             photos={section.data}
             memoPhotoIds={memoPhotoIds}
+            coverPhotoId={trip?.coverPhotoId}
             onPhotoPress={(photo) =>
               router.push(`/trip/${id}/photo-viewer?photoId=${photo.id}`)
             }
+            onPhotoLongPress={setActionPhoto}
           />
         </View>
       </View>
     ),
-    [placeholderColor, id, router, memoPhotoIds]
+    [placeholderColor, id, router, memoPhotoIds, trip?.coverPhotoId]
   );
 
   if (!trip && !loading) {
@@ -97,11 +117,13 @@ export default function TripDetailScreen() {
         renderItem={() => null}
         renderSectionHeader={renderSectionHeader}
         ListHeaderComponent={
-          <TripHeader
-            trip={trip}
-            onEdit={() => router.push(`/trip/${id}/edit`)}
-            onDelete={() => setShowDeleteDialog(true)}
-          />
+          <View style={{ paddingTop: insets.top + Spacing.base }}>
+            <TripHeader
+              trip={trip}
+              onEdit={() => router.push(`/trip/${id}/edit`)}
+              onDelete={() => setShowDeleteDialog(true)}
+            />
+          </View>
         }
         ListFooterComponent={<View style={styles.footer} />}
         contentContainerStyle={sections.length === 0 ? styles.emptyContent : undefined}
@@ -124,6 +146,28 @@ export default function TripDetailScreen() {
         onConfirm={handleDeleteTrip}
         onCancel={() => setShowDeleteDialog(false)}
       />
+
+      <BottomSheet visible={!!actionPhoto} onClose={() => setActionPhoto(null)}>
+        <Pressable
+          onPress={handleSetCover}
+          style={({ pressed }) => [styles.actionItem, pressed && { opacity: 0.6 }]}
+          disabled={actionPhoto?.id === trip?.coverPhotoId}
+        >
+          <Ionicons
+            name={actionPhoto?.id === trip?.coverPhotoId ? 'checkmark-circle' : 'image-outline'}
+            size={20}
+            color={actionPhoto?.id === trip?.coverPhotoId ? placeholderColor : textColor}
+          />
+          <ThemedText
+            style={[
+              Typography.body,
+              actionPhoto?.id === trip?.coverPhotoId && { color: placeholderColor },
+            ]}
+          >
+            {actionPhoto?.id === trip?.coverPhotoId ? '현재 커버 사진' : '커버 사진으로 설정'}
+          </ThemedText>
+        </Pressable>
+      </BottomSheet>
     </ThemedView>
   );
 }
@@ -155,5 +199,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 100,
+  },
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.sm,
   },
 });

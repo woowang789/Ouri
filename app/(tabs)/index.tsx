@@ -11,30 +11,21 @@ import { useTrips } from '@/hooks/useTrips';
 import { groupTripsByMonth } from '@/utils/date';
 import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { getPhotos } from '@/services/photo';
+import { getCoverPhotos } from '@/services/trip';
+import type { CoverPhotoInfo } from '@/services/trip';
 import type { Trip } from '@/types/trip';
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { trips, loading, refreshing, refresh } = useTrips();
-  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({});
+  const [coverPhotos, setCoverPhotos] = useState<Record<string, CoverPhotoInfo>>({});
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
 
-  // 커버 사진 URL 로드
+  // 커버 사진 정보 일괄 로드 (썸네일 URL + Drive 파일 ID)
   useEffect(() => {
-    (async () => {
-      const urls: Record<string, string> = {};
-      for (const trip of trips) {
-        if (trip.coverPhotoId) {
-          const photos = await getPhotos(trip.id);
-          const cover = photos.find((p) => p.id === trip.coverPhotoId);
-          if (cover) urls[trip.id] = cover.driveThumbnailLink;
-        }
-      }
-      setCoverUrls(urls);
-    })();
+    getCoverPhotos(trips).then(setCoverPhotos);
   }, [trips]);
 
   const sections = groupTripsByMonth(trips);
@@ -44,12 +35,13 @@ export default function HomeScreen() {
       <View style={styles.cardWrapper}>
         <TripCard
           trip={item}
-          coverPhotoUrl={coverUrls[item.id]}
+          coverPhotoUrl={coverPhotos[item.id]?.thumbnailUrl}
+          coverDriveFileId={coverPhotos[item.id]?.driveFileId}
           onPress={() => router.push(`/trip/${item.id}`)}
         />
       </View>
     ),
-    [coverUrls, router]
+    [coverPhotos, router]
   );
 
   if (!loading && trips.length === 0) {

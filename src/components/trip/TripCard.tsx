@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
 import { ThemedText } from '@/components/ui/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useDriveImage } from '@/hooks/useDriveImage';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { formatDateRange } from '@/utils/date';
 import type { Trip } from '@/types/trip';
@@ -11,13 +12,15 @@ import type { Trip } from '@/types/trip';
 interface TripCardProps {
   trip: Trip;
   coverPhotoUrl?: string;
+  coverDriveFileId?: string;
   onPress: () => void;
 }
 
-export function TripCard({ trip, coverPhotoUrl, onPress }: TripCardProps) {
+export function TripCard({ trip, coverPhotoUrl, coverDriveFileId, onPress }: TripCardProps) {
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
   const surfaceMutedColor = useThemeColor({}, 'surfaceMuted');
+  const driveSource = useDriveImage(coverDriveFileId);
 
   return (
     <Pressable onPress={onPress}>
@@ -25,7 +28,8 @@ export function TripCard({ trip, coverPhotoUrl, onPress }: TripCardProps) {
         <Card style={StyleSheet.flatten([styles.card, pressed ? styles.pressed : undefined])}>
           {coverPhotoUrl ? (
             <Image
-              source={{ uri: coverPhotoUrl }}
+              source={driveSource ?? { uri: coverPhotoUrl }}
+              placeholder={{ uri: coverPhotoUrl }}
               style={styles.cover}
               contentFit="cover"
               transition={300}

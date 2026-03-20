@@ -63,7 +63,9 @@ export async function reverseGeocode(
 
     const addr = results[0];
     // 도시 + 구/군 + 동/거리 조합
-    const parts = [addr.city, addr.district, addr.street].filter(Boolean);
+    const parts = [addr.city, addr.district, addr.street]
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i);
     const locationName = parts.length > 0 ? parts.join(' ') : addr.name ?? null;
 
     if (locationName) {

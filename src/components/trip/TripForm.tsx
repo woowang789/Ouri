@@ -204,6 +204,7 @@ export function TripForm({
         <ScrollView
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
         >
           <Input
             label="여행 제목"
