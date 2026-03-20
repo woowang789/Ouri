@@ -14,12 +14,40 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPhotos } from '@/services/photo';
 import * as memoService from '@/services/memo';
+import { useDriveImage } from '@/hooks/useDriveImage';
 import { formatShortDate } from '@/utils/date';
 import { AddMemoModal } from '@/components/memo/AddMemoModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import type { Photo } from '@/types/photo';
 import type { Memo } from '@/types/memo';
+
+// FlatList renderItem 내에서 훅을 사용하기 위한 컴포넌트 추출
+function FullScreenPhoto({
+  item,
+  width,
+  height,
+  onPress,
+}: {
+  item: Photo;
+  width: number;
+  height: number;
+  onPress: () => void;
+}) {
+  const driveSource = useDriveImage(item.driveFileId);
+
+  return (
+    <Pressable onPress={onPress} style={{ width, height }}>
+      <Image
+        source={driveSource ?? { uri: item.driveThumbnailLink }}
+        placeholder={{ uri: item.driveThumbnailLink }}
+        style={{ width, height }}
+        contentFit="contain"
+        transition={200}
+      />
+    </Pressable>
+  );
+}
 
 export default function PhotoViewerScreen() {
   const { id, photoId } = useLocalSearchParams<{ id: string; photoId: string }>();
@@ -109,14 +137,12 @@ export default function PhotoViewerScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: Photo }) => (
-      <Pressable onPress={toggleOverlay} style={{ width, height }}>
-        <Image
-          source={{ uri: item.driveThumbnailLink }}
-          style={{ width, height }}
-          contentFit="contain"
-          transition={200}
-        />
-      </Pressable>
+      <FullScreenPhoto
+        item={item}
+        width={width}
+        height={height}
+        onPress={toggleOverlay}
+      />
     ),
     [width, height]
   );

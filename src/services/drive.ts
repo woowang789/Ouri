@@ -9,7 +9,7 @@ const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 const SIMPLE_UPLOAD_LIMIT = 5 * 1024 * 1024; // 5MB
 
 // Google Access Token 획득 (Drive API 호출용)
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
   try {
     const tokens = await GoogleSignin.getTokens();
     return tokens.accessToken;
