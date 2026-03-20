@@ -12,8 +12,8 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 
 export default function MypageScreen() {
-  const { user, logout } = useAuth();
-  const driveConnected = user?.googleDriveConnected ?? false;
+  const { user, logout, driveStatus } = useAuth();
+  const driveConnected = driveStatus === 'connected';
   const { used, isLoading: driveLoading } = useDrive(driveConnected);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -88,7 +88,7 @@ export default function MypageScreen() {
             </View>
           ) : (
             <ThemedText style={[Typography.caption, { color: placeholderColor }]}>
-              다시 로그인하면 Google Drive가 자동으로 연동됩니다.
+              Google Drive 연결이 끊어져 있습니다. 앱을 재시작하면 자동으로 재연동됩니다.
             </ThemedText>
           )}
         </Card>

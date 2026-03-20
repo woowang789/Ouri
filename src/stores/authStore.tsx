@@ -13,20 +13,25 @@ import {
   logout as authLogout,
   getCurrentUser,
   isSignInCancelled,
+  type LoginResult,
 } from '@/services/auth';
 import { supabase } from '@/services/supabase';
+
+export type DriveStatus = 'connected' | 'disconnected';
 
 interface AuthState {
   isLoggedIn: boolean;
   user: User | null;
   isLoading: boolean;
   error: string | null;
+  driveStatus: DriveStatus;
 }
 
 interface AuthContextType extends AuthState {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  driveStatus: DriveStatus;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -37,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
     isLoading: true, // 세션 복원 중
     error: null,
+    driveStatus: 'disconnected',
   });
 
   // 초기화: Google Sign-In 설정 + 세션 복원
@@ -45,13 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getCurrentUser()
       .then(async (user) => {
+        let driveStatus: DriveStatus = 'disconnected';
         // Supabase 세션이 있으면 Google 토큰도 복원
         if (user) {
           try {
             await GoogleSignin.signInSilently();
+            // signInSilently 성공 + Drive 폴더 있음 → connected
+            driveStatus = user.googleDriveConnected ? 'connected' : 'disconnected';
           } catch {
             // 실패해도 로그인 상태는 유지 (Drive 기능만 제한)
             console.warn('Google 토큰 자동 복원 실패');
+            driveStatus = 'disconnected';
           }
         }
         setState({
@@ -59,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user,
           isLoading: false,
           error: null,
+          driveStatus,
         });
       })
       .catch(() => {
@@ -67,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user: null,
           isLoading: false,
           error: null,
+          driveStatus: 'disconnected',
         });
       });
   }, []);
@@ -83,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           isLoggedIn: false,
           user: null,
+          driveStatus: 'disconnected',
           error: prev.isLoggedIn
             ? '세션이 만료되었습니다. 다시 로그인해주세요.'
             : null,
@@ -96,12 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
-      const user = await loginWithGoogle();
+      const result: LoginResult = await loginWithGoogle();
       setState({
         isLoggedIn: true,
-        user,
+        user: result.user,
         isLoading: false,
         error: null,
+        driveStatus: result.driveInitFailed ? 'disconnected' : 'connected',
       });
     } catch (error) {
       // 사용자가 취소한 경우 에러 표시하지 않음
@@ -127,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         isLoggedIn: false,
         error: null,
+        driveStatus: 'disconnected',
       }));
       await authLogout();
     } catch (error) {

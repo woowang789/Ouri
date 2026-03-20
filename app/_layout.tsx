@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '@/stores/authStore';
+import { ToastProvider } from '@/components/ui/Toast';
+import { useDriveStatusToast } from '@/hooks/useDriveStatusToast';
 
 // 세션 복원 완료 전까지 스플래시 유지
 SplashScreen.preventAutoHideAsync();
@@ -60,6 +62,7 @@ function useProtectedRoute() {
 function RootNavigator() {
   const { isLoading } = useAuth();
   const redirectHref = useProtectedRoute();
+  useDriveStatusToast();
 
   // 세션 복원 완료 시 스플래시 숨김
   useEffect(() => {
@@ -85,10 +88,12 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? OuriDarkTheme : OuriLightTheme}>
-        <RootNavigator />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <ToastProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? OuriDarkTheme : OuriLightTheme}>
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -71,8 +71,13 @@ async function upsertUser(userId: string, nickname: string): Promise<User> {
   return mapDbUserToUser(data);
 }
 
+export interface LoginResult {
+  user: User;
+  driveInitFailed: boolean;
+}
+
 // Google Sign-In → Supabase Auth → users 테이블 upsert
-export async function loginWithGoogle(): Promise<User> {
+export async function loginWithGoogle(): Promise<LoginResult> {
   await GoogleSignin.hasPlayServices();
   const response = await GoogleSignin.signIn();
 
@@ -108,13 +113,17 @@ export async function loginWithGoogle(): Promise<User> {
       const folderId = await getOrCreateOuriFolder();
       await updateUserDriveFolderId(user.id, folderId);
       // folderId 반영된 사용자 정보 반환
-      return { ...user, googleDriveConnected: true, googleDriveFolderId: folderId };
+      return {
+        user: { ...user, googleDriveConnected: true, googleDriveFolderId: folderId },
+        driveInitFailed: false,
+      };
     } catch (e) {
       console.warn('Drive 폴더 초기화 실패:', e);
+      return { user, driveInitFailed: true };
     }
   }
 
-  return user;
+  return { user, driveInitFailed: false };
 }
 
 // 로그아웃
