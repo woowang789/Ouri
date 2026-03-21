@@ -38,7 +38,7 @@ interface TripFormProps {
   initialStep?: Step;
   submitLabel: string;
   onSubmit: (data: TripFormData) => Promise<void>;
-  onCancel?: () => void;
+
 }
 
 export function TripForm({
@@ -50,7 +50,7 @@ export function TripForm({
   initialStep = 'photos',
   submitLabel,
   onSubmit,
-  onCancel,
+
 }: TripFormProps) {
   const [step, setStep] = useState<Step>(initialStep);
   const [photos, setPhotos] = useState<SelectedPhoto[]>(initialPhotos);
@@ -245,14 +245,7 @@ export function TripForm({
             />
           </View>
 
-          {onCancel && (
-            <Button
-              title="취소"
-              variant="text"
-              onPress={onCancel}
-              disabled={loading}
-            />
-          )}
+
         </ScrollView>
       )}
 

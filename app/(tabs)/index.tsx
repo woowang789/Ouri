@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, SectionList, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,26 +15,51 @@ import { getCoverPhotos } from '@/services/trip';
 import type { CoverPhotoInfo } from '@/services/trip';
 import type { Trip } from '@/types/trip';
 
+const PAGE_SIZE = 5;
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { trips, loading, refreshing, refresh } = useTrips();
   const [coverPhotos, setCoverPhotos] = useState<Record<string, CoverPhotoInfo>>({});
   const coverPhotosRef = useRef(coverPhotos);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
 
-  // coverPhotosRef를 최신 상태로 유지
+  // trips 개수가 변경되면 visibleCount 리셋 + 커버 캐시 초기화
+  const tripsLengthRef = useRef(trips.length);
   useEffect(() => {
-    coverPhotosRef.current = coverPhotos;
-  }, [coverPhotos]);
+    if (trips.length !== tripsLengthRef.current) {
+      tripsLengthRef.current = trips.length;
+      setVisibleCount(PAGE_SIZE);
+      setCoverPhotos({});
+    }
+  }, [trips.length]);
 
-  // 커버 사진 정보 일괄 로드 (썸네일 URL + Drive 파일 ID)
+  // 화면에 보이는 trips만 슬라이스
+  const visibleTrips = useMemo(
+    () => trips.slice(0, visibleCount),
+    [trips, visibleCount],
+  );
+
+  // coverPhotosRef를 렌더 시점에 동기 업데이트
+  coverPhotosRef.current = coverPhotos;
+
+  // 아직 커버 사진을 조회하지 않은 trips만 추가 조회 후 병합
   useEffect(() => {
-    getCoverPhotos(trips).then(setCoverPhotos);
-  }, [trips]);
+    const uncached = visibleTrips.filter((t) => t.coverPhotoId && !coverPhotos[t.id]);
+    if (uncached.length === 0) return;
+    getCoverPhotos(uncached).then((fresh) => {
+      setCoverPhotos((prev) => ({ ...prev, ...fresh }));
+    });
+  }, [visibleTrips]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const sections = groupTripsByMonth(trips);
+  const sections = useMemo(() => groupTripsByMonth(visibleTrips), [visibleTrips]);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, trips.length));
+  }, [trips.length]);
 
   const renderItem = useCallback(
     ({ item }: { item: Trip }) => (
@@ -88,14 +113,16 @@ export default function HomeScreen() {
         renderItem={renderItem}
         renderSectionHeader={renderSectionHeader}
         extraData={coverPhotos}
-        windowSize={7}
+        windowSize={5}
         maxToRenderPerBatch={5}
-        initialNumToRender={7}
+        initialNumToRender={5}
         removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={styles.list}
         stickySectionHeadersEnabled={false}
         onRefresh={refresh}
         refreshing={refreshing}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
       />
       <FAB onPress={() => router.push('/trip/create')} />
     </ThemedView>

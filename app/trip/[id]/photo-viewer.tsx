@@ -16,6 +16,7 @@ import { getPhotos } from '@/services/photo';
 import { updateTrip, getTrip } from '@/services/trip';
 import * as memoService from '@/services/memo';
 import { useDriveImage } from '@/hooks/useDriveImage';
+import { getThumbnailUri } from '@/services/cache/thumbnailCache';
 import { formatShortDate } from '@/utils/date';
 import { AddMemoModal } from '@/components/memo/AddMemoModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -38,13 +39,25 @@ function FullScreenPhoto({
   onPress: () => void;
 }) {
   const driveSource = useDriveImage(item.driveFileId);
+  const [thumbUri, setThumbUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!item.driveFileId) return;
+    let cancelled = false;
+    getThumbnailUri(item.driveFileId).then((uri) => {
+      if (!cancelled) setThumbUri(uri);
+    });
+    return () => { cancelled = true; };
+  }, [item.driveFileId]);
 
   return (
     <Pressable onPress={onPress} style={{ width, height }}>
       <Image
         source={driveSource ?? undefined}
+        placeholder={thumbUri ? { uri: thumbUri } : undefined}
         style={{ width, height }}
         contentFit="contain"
+        placeholderContentFit="contain"
         transition={200}
       />
     </Pressable>

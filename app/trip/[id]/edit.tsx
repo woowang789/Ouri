@@ -145,7 +145,7 @@ export default function TripEditScreen() {
         }}
         submitLabel="저장"
         onSubmit={handleSubmit}
-        onCancel={() => router.back()}
+
       />
     </View>
   );
