@@ -102,11 +102,10 @@ export async function updateTrip(
 }
 
 export interface CoverPhotoInfo {
-  thumbnailUrl: string;
   driveFileId: string;
 }
 
-// 여행 목록의 커버 사진 정보 일괄 조회 (썸네일 URL + Drive 파일 ID)
+// 여행 목록의 커버 사진 Drive 파일 ID 일괄 조회
 export async function getCoverPhotos(trips: Trip[]): Promise<Record<string, CoverPhotoInfo>> {
   const coverPhotoIds = trips
     .filter(t => t.coverPhotoId)
@@ -115,11 +114,11 @@ export async function getCoverPhotos(trips: Trip[]): Promise<Record<string, Cove
 
   const { data } = await supabase
     .from('photos')
-    .select('id, drive_thumbnail_link, drive_file_id')
+    .select('id, drive_file_id')
     .in('id', coverPhotoIds);
 
   const photoMap = new Map(
-    data?.map(p => [p.id, { thumbnailUrl: p.drive_thumbnail_link, driveFileId: p.drive_file_id }]) ?? []
+    data?.map(p => [p.id, { driveFileId: p.drive_file_id }]) ?? []
   );
   const result: Record<string, CoverPhotoInfo> = {};
   for (const trip of trips) {

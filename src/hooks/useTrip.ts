@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import type { Trip } from '@/types/trip';
 import type { Photo } from '@/types/photo';
 import * as tripService from '@/services/trip';
-import * as photoService from '@/services/photo';
+import { getPhotos, deletePhoto } from '@/services/photo';
 import { cachePhotos, getCachedPhotos, getCachedTripById } from '@/services/cache';
 import { useNetworkStatus } from './useNetworkStatus';
 
@@ -21,7 +21,7 @@ export function useTrip(id: string) {
       if (isOnline) {
         const [tripData, photosData] = await Promise.all([
           tripService.getTrip(id),
-          photoService.getPhotos(id),
+          getPhotos(id),
         ]);
         setTrip(tripData);
         setPhotos(photosData);
@@ -56,25 +56,13 @@ export function useTrip(id: string) {
     }, [load])
   );
 
-  const addPhoto = useCallback(
-    async (data: Parameters<typeof photoService.uploadPhoto>[0]) => {
-      if (!isOnline) {
-        Alert.alert('오프라인', '오프라인 상태에서는 사진을 업로드할 수 없습니다.');
-        return;
-      }
-      await photoService.uploadPhoto(data);
-      await load();
-    },
-    [load, isOnline]
-  );
-
   const removePhoto = useCallback(
     async (photoId: string) => {
       if (!isOnline) {
         Alert.alert('오프라인', '오프라인 상태에서는 사진을 삭제할 수 없습니다.');
         return;
       }
-      await photoService.deletePhoto(photoId);
+      await deletePhoto(photoId);
       await load();
     },
     [load, isOnline]
@@ -106,7 +94,6 @@ export function useTrip(id: string) {
     loading,
     isOfflineData,
     refresh: load,
-    addPhoto,
     removePhoto,
     updateTrip,
     deleteTrip,

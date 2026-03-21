@@ -42,8 +42,7 @@ function FullScreenPhoto({
   return (
     <Pressable onPress={onPress} style={{ width, height }}>
       <Image
-        source={driveSource ?? { uri: item.driveThumbnailLink }}
-        placeholder={{ uri: item.driveThumbnailLink }}
+        source={driveSource ?? undefined}
         style={{ width, height }}
         contentFit="contain"
         transition={200}

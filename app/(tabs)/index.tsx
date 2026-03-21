@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, SectionList, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ui/ThemedText';
@@ -20,8 +20,14 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { trips, loading, refreshing, refresh } = useTrips();
   const [coverPhotos, setCoverPhotos] = useState<Record<string, CoverPhotoInfo>>({});
+  const coverPhotosRef = useRef(coverPhotos);
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
+
+  // coverPhotosRef를 최신 상태로 유지
+  useEffect(() => {
+    coverPhotosRef.current = coverPhotos;
+  }, [coverPhotos]);
 
   // 커버 사진 정보 일괄 로드 (썸네일 URL + Drive 파일 ID)
   useEffect(() => {
@@ -35,13 +41,24 @@ export default function HomeScreen() {
       <View style={styles.cardWrapper}>
         <TripCard
           trip={item}
-          coverPhotoUrl={coverPhotos[item.id]?.thumbnailUrl}
-          coverDriveFileId={coverPhotos[item.id]?.driveFileId}
+          coverDriveFileId={coverPhotosRef.current[item.id]?.driveFileId}
           onPress={() => router.push(`/trip/${item.id}`)}
         />
       </View>
     ),
-    [coverPhotos, router]
+    [router]
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: { title: string; data: Trip[] } }) => (
+      <View style={styles.sectionHeaderContainer}>
+        <View style={[styles.sectionDot, { backgroundColor: primaryColor }]} />
+        <ThemedText style={[Typography.captionBold, styles.sectionHeader, { color: placeholderColor }]}>
+          {section.title}
+        </ThemedText>
+      </View>
+    ),
+    [primaryColor, placeholderColor]
   );
 
   if (!loading && trips.length === 0) {
@@ -62,23 +79,19 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.base }]}>
+        <ThemedText style={styles.appTitle}>Ouri</ThemedText>
+      </View>
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeaderContainer}>
-            <View style={[styles.sectionDot, { backgroundColor: primaryColor }]} />
-            <ThemedText style={[Typography.captionBold, styles.sectionHeader, { color: placeholderColor }]}>
-              {section.title}
-            </ThemedText>
-          </View>
-        )}
-        ListHeaderComponent={
-          <View style={[styles.header, { paddingTop: insets.top + Spacing.base }]}>
-            <ThemedText style={styles.appTitle}>Ouri</ThemedText>
-          </View>
-        }
+        renderSectionHeader={renderSectionHeader}
+        extraData={coverPhotos}
+        windowSize={7}
+        maxToRenderPerBatch={5}
+        initialNumToRender={7}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={styles.list}
         stickySectionHeadersEnabled={false}
         onRefresh={refresh}

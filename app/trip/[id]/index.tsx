@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, SectionList, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -116,6 +116,10 @@ export default function TripDetailScreen() {
         keyExtractor={(item) => item.id}
         renderItem={() => null}
         renderSectionHeader={renderSectionHeader}
+        windowSize={5}
+        maxToRenderPerBatch={3}
+        initialNumToRender={3}
+        removeClippedSubviews={Platform.OS === 'android'}
         ListHeaderComponent={
           <View style={{ paddingTop: insets.top + Spacing.base }}>
             <TripHeader

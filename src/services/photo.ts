@@ -1,15 +1,13 @@
 import type { Photo } from '@/types/photo';
 import { supabase } from './supabase';
-import { uploadFileToDrive, deleteDriveFile } from './drive';
+import { deleteDriveFile } from './drive';
 import { deleteMemosByPhoto } from './memo';
-import { addPendingGeocode } from './cache/geocodeBackfill';
 
 // DB 스네이크케이스 → 앱 카멜케이스 변환
 function mapDbPhotoToPhoto(row: {
   id: string;
   trip_id: string;
   drive_file_id: string;
-  drive_thumbnail_link: string;
   taken_at: string;
   taken_lat: number | null;
   taken_lng: number | null;
@@ -22,7 +20,6 @@ function mapDbPhotoToPhoto(row: {
     id: row.id,
     tripId: row.trip_id,
     driveFileId: row.drive_file_id,
-    driveThumbnailLink: row.drive_thumbnail_link,
     takenAt: row.taken_at,
     takenLat: row.taken_lat,
     takenLng: row.taken_lng,
@@ -43,80 +40,6 @@ export async function getPhotos(tripId: string): Promise<Photo[]> {
 
   if (error) throw new Error(`사진 목록 조회 실패: ${error.message}`);
   return (data ?? []).map(mapDbPhotoToPhoto);
-}
-
-// 사진 업로드 (Drive 업로드 → Supabase INSERT)
-// user_id와 Drive folderId는 내부에서 자동 획득
-export async function uploadPhoto(data: {
-  tripId: string;
-  localUri: string;
-  takenAt: string;
-  takenLat: number | null;
-  takenLng: number | null;
-  takenLocationName: string | null;
-}): Promise<Photo> {
-  // 현재 사용자 확인
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('로그인이 필요합니다');
-
-  // 사용자의 Drive 폴더 ID 조회
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('google_drive_folder_id')
-    .eq('id', user.id)
-    .single();
-
-  if (userError || !userData?.google_drive_folder_id) {
-    throw new Error('Google Drive 연동이 필요합니다. 다시 로그인해주세요.');
-  }
-
-  // Google Drive에 업로드
-  const fileName = `ouri_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
-  const { fileId, thumbnailLink } = await uploadFileToDrive(
-    data.localUri,
-    fileName,
-    'image/jpeg',
-    userData.google_drive_folder_id,
-  );
-
-  // Supabase photos 테이블에 메타데이터 저장
-  const { data: created, error } = await supabase
-    .from('photos')
-    .insert({
-      trip_id: data.tripId,
-      drive_file_id: fileId,
-      drive_thumbnail_link: thumbnailLink || data.localUri,
-      taken_at: data.takenAt,
-      taken_lat: data.takenLat,
-      taken_lng: data.takenLng,
-      taken_location_name: data.takenLocationName,
-      uploaded_by: user.id,
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error(`사진 메타데이터 저장 실패: ${error.message}`);
-
-  // 역지오코딩 실패(장소명 없음) + 좌표 있음 → 백필 대상 등록
-  if (!data.takenLocationName && data.takenLat != null && data.takenLng != null) {
-    addPendingGeocode(created.id, data.takenLat, data.takenLng);
-  }
-
-  // 첫 사진이면 자동 커버 설정
-  const { data: tripData } = await supabase
-    .from('trips')
-    .select('cover_photo_id')
-    .eq('id', data.tripId)
-    .single();
-
-  if (tripData && !tripData.cover_photo_id) {
-    await supabase
-      .from('trips')
-      .update({ cover_photo_id: created.id, updated_at: new Date().toISOString() })
-      .eq('id', data.tripId);
-  }
-
-  return mapDbPhotoToPhoto(created);
 }
 
 // 사진 삭제 (메모 → Drive → Supabase 순서)

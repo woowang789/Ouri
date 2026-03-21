@@ -1,9 +1,11 @@
-import { Alert } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ui/ThemedView';
 import { TripForm } from '@/components/trip/TripForm';
 import { useTrip } from '@/hooks/useTrip';
-import * as photoService from '@/services/photo';
+import { deletePhoto } from '@/services/photo';
+import { enqueuePhotos } from '@/services/upload/uploadQueue';
+import { uploadWorker } from '@/services/upload/uploadWorker';
 import type { TripFormData } from '@/components/trip/TripForm';
 import type { SelectedPhoto } from '@/types/photo';
 
@@ -14,12 +16,9 @@ export default function TripEditScreen() {
 
   if (!trip) return <ThemedView style={{ flex: 1 }} />;
 
-  // 기존 업로드된 사진의 URI 목록 (새 사진 식별용)
-  const existingUris = new Set(photos.map((p) => p.driveThumbnailLink));
-
-  // 기존 업로드된 사진을 SelectedPhoto 형태로 변환
+  // 기존 업로드된 사진을 SelectedPhoto 형태로 변환 (driveFileId를 마커로 사용)
   const existingPhotos: SelectedPhoto[] = photos.map((p) => ({
-    localUri: p.driveThumbnailLink,
+    localUri: `drive://${p.driveFileId}`,
     takenAt: p.takenAt,
     takenLat: p.takenLat,
     takenLng: p.takenLng,
@@ -37,24 +36,21 @@ export default function TripEditScreen() {
         locationLng: data.locationLng,
       });
 
-      // 새로 추가된 사진만 순차 업로드 (Drive 레이트 리밋 대응)
-      const newPhotos = data.photos.filter((p) => !existingUris.has(p.localUri));
-      for (const photo of newPhotos) {
-        await photoService.uploadPhoto({
-          tripId: id!,
-          localUri: photo.localUri,
-          takenAt: photo.takenAt ?? new Date().toISOString(),
-          takenLat: photo.takenLat,
-          takenLng: photo.takenLng,
-          takenLocationName: photo.takenLocationName,
-        });
+      // 새로 추가된 사진을 업로드 큐에 추가
+      const newPhotos = data.photos.filter((p) => !p.localUri.startsWith('drive://'));
+      if (newPhotos.length > 0) {
+        enqueuePhotos(id!, newPhotos);
+        uploadWorker.start();
       }
 
       // 삭제된 사진 처리 (폼에서 제거된 기존 사진)
-      const remainingUris = new Set(data.photos.map((p) => p.localUri));
-      const deletedPhotos = photos.filter((p) => !remainingUris.has(p.driveThumbnailLink));
+      const remainingDriveIds = new Set(
+        data.photos.filter((p) => p.localUri.startsWith('drive://'))
+          .map((p) => p.localUri.replace('drive://', ''))
+      );
+      const deletedPhotos = photos.filter((p) => !remainingDriveIds.has(p.driveFileId));
       for (const p of deletedPhotos) {
-        await photoService.deletePhoto(p.id);
+        await deletePhoto(p.id);
       }
 
       router.back();
@@ -64,24 +60,32 @@ export default function TripEditScreen() {
   };
 
   return (
-    <TripForm
-      initialPhotos={existingPhotos}
-      initialTitle={trip.title}
-      initialStartDate={trip.startDate}
-      initialEndDate={trip.endDate}
-      initialPlace={{
-        id: '',
-        placeName: trip.locationName,
-        addressName: trip.locationName,
-        roadAddressName: '',
-        x: String(trip.locationLng),
-        y: String(trip.locationLat),
-        categoryName: '',
-        phone: '',
-      }}
-      submitLabel="저장"
-      onSubmit={handleSubmit}
-      onCancel={() => router.back()}
-    />
+    <View style={styles.container}>
+      <TripForm
+        initialPhotos={existingPhotos}
+        initialTitle={trip.title}
+        initialStartDate={trip.startDate}
+        initialEndDate={trip.endDate}
+        initialPlace={{
+          id: '',
+          placeName: trip.locationName,
+          addressName: trip.locationName,
+          roadAddressName: '',
+          x: String(trip.locationLng),
+          y: String(trip.locationLat),
+          categoryName: '',
+          phone: '',
+        }}
+        submitLabel="저장"
+        onSubmit={handleSubmit}
+        onCancel={() => router.back()}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

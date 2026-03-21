@@ -233,6 +233,7 @@ export function TripForm({
               title="이전"
               variant="outline"
               onPress={handleBack}
+              disabled={loading}
               style={styles.halfButton}
             />
             <Button
@@ -249,6 +250,7 @@ export function TripForm({
               title="취소"
               variant="text"
               onPress={onCancel}
+              disabled={loading}
             />
           )}
         </ScrollView>

@@ -1,7 +1,9 @@
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { BorderRadius } from '@/constants/theme';
+import { getThumbnailUri } from '@/services/cache/thumbnailCache';
 import type { Photo } from '@/types/photo';
 
 interface PhotoThumbnailProps {
@@ -13,15 +15,30 @@ interface PhotoThumbnailProps {
   onLongPress?: () => void;
 }
 
-export function PhotoThumbnail({ photo, size = 110, hasMemo, isCover, onPress, onLongPress }: PhotoThumbnailProps) {
+export const PhotoThumbnail = React.memo(function PhotoThumbnail({ photo, size = 110, hasMemo, isCover, onPress, onLongPress }: PhotoThumbnailProps) {
+  const [uri, setUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!photo.driveFileId) return;
+    let cancelled = false;
+    getThumbnailUri(photo.driveFileId).then((localUri) => {
+      if (!cancelled) setUri(localUri);
+    });
+    return () => { cancelled = true; };
+  }, [photo.driveFileId]);
+
   return (
     <Pressable onPress={onPress} onLongPress={onLongPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Image
-        source={{ uri: photo.driveThumbnailLink }}
-        style={[styles.image, { width: size, height: size }]}
-        contentFit="cover"
-        transition={200}
-      />
+      {uri ? (
+        <Image
+          source={{ uri }}
+          style={[styles.image, { width: size, height: size }]}
+          contentFit="cover"
+          transition={200}
+        />
+      ) : (
+        <View style={[styles.image, styles.placeholder, { width: size, height: size }]} />
+      )}
       {isCover && (
         <View style={styles.coverBadge}>
           <Ionicons name="image" size={10} color="#fff" />
@@ -34,11 +51,14 @@ export function PhotoThumbnail({ photo, size = 110, hasMemo, isCover, onPress, o
       )}
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   image: {
     borderRadius: BorderRadius.md,
+  },
+  placeholder: {
+    backgroundColor: '#E8E4DF',
   },
   pressed: {
     opacity: 0.75,

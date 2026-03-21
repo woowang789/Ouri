@@ -1,3 +1,4 @@
+import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,12 +12,11 @@ import type { Trip } from '@/types/trip';
 
 interface TripCardProps {
   trip: Trip;
-  coverPhotoUrl?: string;
   coverDriveFileId?: string;
   onPress: () => void;
 }
 
-export function TripCard({ trip, coverPhotoUrl, coverDriveFileId, onPress }: TripCardProps) {
+export const TripCard = React.memo(function TripCard({ trip, coverDriveFileId, onPress }: TripCardProps) {
   const placeholderColor = useThemeColor({}, 'placeholder');
   const primaryColor = useThemeColor({}, 'primary');
   const surfaceMutedColor = useThemeColor({}, 'surfaceMuted');
@@ -26,14 +26,15 @@ export function TripCard({ trip, coverPhotoUrl, coverDriveFileId, onPress }: Tri
     <Pressable onPress={onPress}>
       {({ pressed }) => (
         <Card style={StyleSheet.flatten([styles.card, pressed ? styles.pressed : undefined])}>
-          {coverPhotoUrl ? (
+          {driveSource ? (
             <Image
-              source={driveSource ?? { uri: coverPhotoUrl }}
-              placeholder={{ uri: coverPhotoUrl }}
+              source={driveSource}
               style={styles.cover}
               contentFit="cover"
               transition={300}
             />
+          ) : coverDriveFileId ? (
+            <View style={[styles.cover, styles.placeholder, { backgroundColor: surfaceMutedColor }]} />
           ) : (
             <View style={[styles.cover, styles.placeholder, { backgroundColor: surfaceMutedColor }]}>
               <Ionicons name="image-outline" size={36} color={placeholderColor} />
@@ -62,7 +63,7 @@ export function TripCard({ trip, coverPhotoUrl, coverDriveFileId, onPress }: Tri
       )}
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

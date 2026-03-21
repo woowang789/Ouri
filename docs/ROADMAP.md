@@ -314,7 +314,7 @@ Ouri/
 - [x] Google Drive Resumable Upload 구현 (5MB 초과 대응)
 - [x] Supabase `photos` 테이블에 메타데이터 저장
 - [x] Drive `thumbnailLink` 기반 썸네일 표시 (없을 시 localUri 폴백)
-- [ ] `expo-file-system` 캐시 디렉터리에 썸네일 로컬 캐싱 (`{drive_file_id}.jpg`)
+- [x] `expo-file-system` 캐시 디렉터리에 썸네일 로컬 캐싱 (`{drive_file_id}.jpg`)
 
 ### 4-3. 사진 뷰어 실연동 (F004)
 
@@ -359,10 +359,10 @@ Ouri/
 
 ### 6-2. 성능 최적화
 
-- [ ] 타임라인 FlatList 가상화 최적화 (대량 여행 카드)
-- [ ] 사진 그리드 lazy loading
-- [ ] Google Drive API 호출 최소화 (썸네일 캐시 히트율 확인)
-- [ ] 대용량 사진 업로드 진행률 표시
+- [x] 타임라인 FlatList 가상화 최적화 (대량 여행 카드)
+- [x] 사진 그리드 lazy loading
+- [x] Google Drive API 호출 최소화 (썸네일 캐시 히트율 확인)
+- [x] 대용량 사진 업로드 진행률 표시
 
 ### 6-3. 에러 처리 & 엣지 케이스
 

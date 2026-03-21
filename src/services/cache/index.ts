@@ -3,3 +3,5 @@ export { cacheTrips, getCachedTrips, getCachedTripById, clearTripCache } from '.
 export { cachePhotos, getCachedPhotos, clearPhotoCache } from './photoCache';
 export { cacheMemos, getCachedMemos, getCachedPhotoIdsWithMemo } from './memoCache';
 export { addPendingGeocode, runGeocodeBackfill } from './geocodeBackfill';
+export { clearThumbnailCache, getThumbnailUri, prefetchThumbnails, getThumbnailCacheSize } from './thumbnailCache';
+

@@ -210,14 +210,33 @@ async function simpleUpload(
   return result.id;
 }
 
-// Resumable Upload (5MB 초과 대응)
+// Resumable Upload (5MB 초과 대응) — 내부 사용
 async function resumableUpload(
   accessToken: string,
   localUri: string,
   metadata: { name: string; parents: string[] },
   mimeType: string,
 ): Promise<string> {
-  // Step 1: 업로드 세션 시작
+  const sessionUri = await initiateResumableSession(
+    metadata.parents[0],
+    metadata.name,
+    mimeType,
+  );
+  return sendResumableChunk(sessionUri, localUri, mimeType);
+}
+
+/**
+ * Resumable Upload 세션 시작 → 세션 URI 반환
+ * 업로드 큐에서 세션 URI를 저장해두고 나중에 재개할 수 있음
+ */
+async function initiateResumableSession(
+  folderId: string,
+  fileName: string,
+  mimeType: string,
+): Promise<string> {
+  const accessToken = await getAccessToken();
+  const metadata = { name: fileName, parents: [folderId] };
+
   const initResponse = await fetch(
     `${UPLOAD_API}/files?uploadType=resumable`,
     {
@@ -240,12 +259,23 @@ async function resumableUpload(
     throw new Error('사진 업로드 세션 URI를 받지 못했습니다');
   }
 
-  // Step 2: 파일 전송 (단일 청크)
+  return uploadUri;
+}
+
+/**
+ * Resumable Upload 세션에 파일 데이터 전송
+ * 새 업로드 또는 재개 업로드 모두 지원
+ */
+async function sendResumableChunk(
+  sessionUri: string,
+  localUri: string,
+  mimeType: string,
+): Promise<string> {
   const fileBase64 = await FileSystem.readAsStringAsync(localUri, {
     encoding: FileSystem.EncodingType.Base64,
   });
 
-  const uploadResponse = await fetch(uploadUri, {
+  const uploadResponse = await fetch(sessionUri, {
     method: 'PUT',
     headers: {
       'Content-Type': mimeType,

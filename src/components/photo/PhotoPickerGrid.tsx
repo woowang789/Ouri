@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useDriveImage } from '@/hooks/useDriveImage';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import type { SelectedPhoto } from '@/types/photo';
 
@@ -24,21 +25,12 @@ export function PhotoPickerGrid({ photos, onRemove, onAdd }: PhotoPickerGridProp
   return (
     <View style={styles.grid}>
       {photos.map((photo, index) => (
-        <View key={`${index}-${photo.localUri}`} style={[styles.cell, { width: cellSize, height: cellSize }]}>
-          <Image
-            source={{ uri: photo.localUri }}
-            style={styles.image}
-            contentFit="cover"
-            transition={200}
-          />
-          <Pressable
-            style={styles.removeButton}
-            onPress={() => onRemove(index)}
-            hitSlop={8}
-          >
-            <Ionicons name="close-circle" size={22} color="#fff" />
-          </Pressable>
-        </View>
+        <PhotoCell
+          key={`${index}-${photo.localUri}`}
+          photo={photo}
+          size={cellSize}
+          onRemove={() => onRemove(index)}
+        />
       ))}
 
       {/* 추가 버튼 */}
@@ -51,6 +43,35 @@ export function PhotoPickerGrid({ photos, onRemove, onAdd }: PhotoPickerGridProp
         onPress={onAdd}
       >
         <Ionicons name="add" size={32} color={placeholderColor} />
+      </Pressable>
+    </View>
+  );
+}
+
+// 개별 사진 셀 — drive:// URI는 Drive 인증 이미지로 표시
+function PhotoCell({ photo, size, onRemove }: { photo: SelectedPhoto; size: number; onRemove: () => void }) {
+  const isDrivePhoto = photo.localUri.startsWith('drive://');
+  const driveFileId = isDrivePhoto ? photo.localUri.replace('drive://', '') : undefined;
+  const driveSource = useDriveImage(driveFileId);
+
+  const imageSource = isDrivePhoto
+    ? driveSource ?? undefined
+    : { uri: photo.localUri };
+
+  return (
+    <View style={[styles.cell, { width: size, height: size }]}>
+      <Image
+        source={imageSource}
+        style={styles.image}
+        contentFit="cover"
+        transition={200}
+      />
+      <Pressable
+        style={styles.removeButton}
+        onPress={onRemove}
+        hitSlop={8}
+      >
+        <Ionicons name="close-circle" size={22} color="#fff" />
       </Pressable>
     </View>
   );

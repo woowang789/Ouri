@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navig
 import { Stack, useSegments, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { Alert } from 'react-native';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
@@ -11,6 +12,9 @@ import { AuthProvider, useAuth } from '@/stores/authStore';
 import { ToastProvider } from '@/components/ui/Toast';
 import { useDriveStatusToast } from '@/hooks/useDriveStatusToast';
 import { getDatabase } from '@/services/cache/database';
+import { uploadWorker, hasPendingItems } from '@/services/upload';
+import { resetStaleUploading } from '@/services/upload/uploadQueue';
+import { GlobalUploadProgressBar } from '@/components/ui/UploadProgressBar';
 
 // 세션 복원 완료 전까지 스플래시 유지
 SplashScreen.preventAutoHideAsync();
@@ -68,7 +72,7 @@ function useProtectedRoute() {
 }
 
 function RootNavigator() {
-  const { isLoading } = useAuth();
+  const { isLoading, isLoggedIn } = useAuth();
   const redirectHref = useProtectedRoute();
   useDriveStatusToast();
 
@@ -79,6 +83,24 @@ function RootNavigator() {
     }
   }, [isLoading]);
 
+  // 로그인 상태에서 앱 시작 시 미완료 업로드가 있으면 확인 팝업
+  useEffect(() => {
+    if (!isLoading && isLoggedIn) {
+      // stale 상태 리셋 후 pending 항목 확인
+      resetStaleUploading();
+      if (hasPendingItems()) {
+        Alert.alert(
+          '업로드 미완료',
+          '이전에 중단된 사진 업로드가 있습니다.\n이어서 진행하시겠습니까?',
+          [
+            { text: '취소', style: 'cancel' },
+            { text: '이어서 업로드', onPress: () => uploadWorker.start() },
+          ],
+        );
+      }
+    }
+  }, [isLoading, isLoggedIn]);
+
   return (
     <>
       <Stack>
@@ -87,6 +109,7 @@ function RootNavigator() {
         <Stack.Screen name="trip" options={{ headerShown: false }} />
       </Stack>
       {redirectHref && <Redirect href={redirectHref} />}
+      {isLoggedIn && <GlobalUploadProgressBar />}
     </>
   );
 }

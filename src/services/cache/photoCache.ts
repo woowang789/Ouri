@@ -5,7 +5,6 @@ interface CachedPhotoRow {
   id: string;
   trip_id: string;
   drive_file_id: string;
-  drive_thumbnail_link: string;
   taken_at: string;
   taken_lat: number | null;
   taken_lng: number | null;
@@ -20,7 +19,6 @@ function mapRowToPhoto(row: CachedPhotoRow): Photo {
     id: row.id,
     tripId: row.trip_id,
     driveFileId: row.drive_file_id,
-    driveThumbnailLink: row.drive_thumbnail_link,
     takenAt: row.taken_at,
     takenLat: row.taken_lat,
     takenLng: row.taken_lng,
@@ -40,9 +38,9 @@ export function cachePhotos(tripId: string, photos: Photo[]): void {
       db.runSync('DELETE FROM cached_photos WHERE trip_id = ?', tripId);
       for (const photo of photos) {
         db.runSync(
-          `INSERT INTO cached_photos (id, trip_id, drive_file_id, drive_thumbnail_link, taken_at, taken_lat, taken_lng, taken_location_name, uploaded_by, created_at, updated_at, cached_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          photo.id, photo.tripId, photo.driveFileId, photo.driveThumbnailLink,
+          `INSERT INTO cached_photos (id, trip_id, drive_file_id, taken_at, taken_lat, taken_lng, taken_location_name, uploaded_by, created_at, updated_at, cached_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          photo.id, photo.tripId, photo.driveFileId,
           photo.takenAt, photo.takenLat, photo.takenLng, photo.takenLocationName,
           photo.uploadedBy, photo.createdAt, photo.updatedAt, now,
         );
@@ -58,7 +56,7 @@ export function getCachedPhotos(tripId: string): Photo[] {
   try {
     const db = getDatabase();
     const rows = db.getAllSync<CachedPhotoRow>(
-      'SELECT * FROM cached_photos WHERE trip_id = ? ORDER BY taken_at ASC',
+      'SELECT id, trip_id, drive_file_id, taken_at, taken_lat, taken_lng, taken_location_name, uploaded_by, created_at, updated_at FROM cached_photos WHERE trip_id = ? ORDER BY taken_at ASC',
       tripId,
     );
     return rows.map(mapRowToPhoto);
