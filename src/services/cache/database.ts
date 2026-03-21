@@ -1,7 +1,7 @@
 import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 
 const DB_NAME = 'ouri_cache.db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let db: SQLiteDatabase | null = null;
 let schemaVersion = -1;
@@ -116,6 +116,25 @@ function initializeSchema(database: SQLiteDatabase): void {
     `);
   }
 
+  if (currentVersion < 3) {
+    database.execSync(`
+      CREATE TABLE IF NOT EXISTS delete_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        photo_id TEXT NOT NULL,
+        drive_file_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        retry_count INTEGER NOT NULL DEFAULT 0,
+        error_message TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_delete_queue_status ON delete_queue(status);
+      CREATE INDEX IF NOT EXISTS idx_delete_queue_trip_id ON delete_queue(trip_id);
+    `);
+  }
+
   if (currentVersion < DB_VERSION) {
     database.execSync(`PRAGMA user_version = ${DB_VERSION}`);
   }
@@ -134,6 +153,7 @@ export function clearAllCache(): void {
     DELETE FROM cached_memos;
     DELETE FROM pending_geocode;
     DELETE FROM upload_queue;
+    DELETE FROM delete_queue;
   `);
   // 썸네일 파일 캐시 삭제 (fire-and-forget)
   import('./thumbnailCache').then((m) => m.clearThumbnailCache()).catch(() => {});

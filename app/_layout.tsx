@@ -14,6 +14,8 @@ import { useDriveStatusToast } from '@/hooks/useDriveStatusToast';
 import { getDatabase } from '@/services/cache/database';
 import { uploadWorker, hasPendingItems } from '@/services/upload';
 import { resetStaleUploading } from '@/services/upload/uploadQueue';
+import { deleteWorker, hasPendingItems as hasDeletePending } from '@/services/delete';
+import { resetStaleDeleting } from '@/services/delete/deleteQueue';
 import { GlobalUploadProgressBar } from '@/components/ui/UploadProgressBar';
 
 // 세션 복원 완료 전까지 스플래시 유지
@@ -88,13 +90,29 @@ function RootNavigator() {
     if (!isLoading && isLoggedIn) {
       // stale 상태 리셋 후 pending 항목 확인
       resetStaleUploading();
-      if (hasPendingItems()) {
+      resetStaleDeleting();
+
+      const pendingUpload = hasPendingItems();
+      const pendingDelete = hasDeletePending();
+
+      if (pendingUpload || pendingDelete) {
+        const tasks = [
+          pendingUpload && '업로드',
+          pendingDelete && '삭제',
+        ].filter(Boolean).join(' 및 ');
+
         Alert.alert(
-          '업로드 미완료',
-          '이전에 중단된 사진 업로드가 있습니다.\n이어서 진행하시겠습니까?',
+          '미완료 작업',
+          `이전에 중단된 사진 ${tasks} 작업이 있습니다.\n이어서 진행하시겠습니까?`,
           [
             { text: '취소', style: 'cancel' },
-            { text: '이어서 업로드', onPress: () => uploadWorker.start() },
+            {
+              text: '이어서 진행',
+              onPress: () => {
+                if (pendingUpload) uploadWorker.start();
+                if (pendingDelete) deleteWorker.start();
+              },
+            },
           ],
         );
       }

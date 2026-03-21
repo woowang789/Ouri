@@ -21,7 +21,7 @@ export default function TripDetailLayout() {
           headerShown: false,
         }}
       />
-      <Stack.Screen name="edit" options={{ title: '여행 수정' }} />
+      <Stack.Screen name="edit" options={{ title: '여행 수정', headerBackVisible: false }} />
       <Stack.Screen
         name="photo-viewer"
         options={{
